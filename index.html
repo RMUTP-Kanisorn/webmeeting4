@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบช่วยการประชุมออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="gradient-bg min-h-screen">
+    <header class="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-4xl font-bold text-white">ระบบช่วยการประชุมออนไลน์</h1>
+                </div>
+                <nav class="flex justify-center space-x-8">
+                    <button onclick="showSection('booking')" class="nav-btn active">📝 จองห้อง</button>
+                    <button onclick="showSection('calendar')" class="nav-btn">📅 ปฏิทิน</button>
+                    <button onclick="showSection('manage')" class="nav-btn">📋 จัดการการจอง</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- ส่วนจองห้อง -->
+        <div id="booking-section" class="section">
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl card-shadow p-8 mb-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">จองห้องประชุม</h2>
+                <form id="bookingForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">วันที่ต้องการจอง</label>
+                        <input type="date" id="bookingDate" class="form-input w-full px-4 py-3 rounded-lg" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">ห้องประชุม</label>
+                        <select id="roomSelect" class="form-input w-full px-4 py-3 rounded-lg" required>
+                            <option value="">เลือกห้องประชุม</option>
+                            <option value="ห้องประชุม 1 (รองรับ 13 คน)">ห้องประชุม 1 (รองรับ 13 คน)</option>
+                            <option value="ห้องประชุม 2 (รองรับ 30 คน)">ห้องประชุม 2 (รองรับ 30 คน)</option>
+                            <option value="ห้องประชุม 3 (รองรับ 100 คน)">ห้องประชุม 3 (รองรับ 100 คน)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">เวลาเริ่มต้น</label>
+                        <select id="startTime" class="form-input w-full px-4 py-3 rounded-lg" required>
+                            <option value="">เลือกเวลาเริ่มต้น</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">เวลาสิ้นสุด</label>
+                        <select id="endTime" class="form-input w-full px-4 py-3 rounded-lg" required>
+                            <option value="">เลือกเวลาสิ้นสุด</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">ชื่อผู้จอง</label>
+                        <input type="text" id="bookerName" class="form-input w-full px-4 py-3 rounded-lg" placeholder="กรอกชื่อผู้จอง" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">เบอร์ติดต่อ</label>
+                        <input type="tel" id="phoneNumber" class="form-input w-full px-4 py-3 rounded-lg" placeholder="กรอกเบอร์ติดต่อ" required>
+                    </div>
+                    <div class="space-y-2 md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700">เอกสารที่เกี่ยวข้อง / หมายเหตุ</label>
+                        <textarea id="documents" class="form-input w-full px-4 py-3 rounded-lg h-24" placeholder="รายละเอียดเอกสารหรือหมายเหตุเพิ่มเติม"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-4 px-6 rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all duration-300 transform hover:scale-105">
+                            จองห้องประชุม
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ส่วนปฏิทิน -->
+        <div id="calendar-section" class="section hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl card-shadow p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">ปฏิทินการจอง</h2>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="previousMonth()" class="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"><span class="text-xl">←</span></button>
+                        <span id="currentMonth" class="text-xl font-semibold text-gray-700"></span>
+                        <button onclick="nextMonth()" class="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"><span class="text-xl">→</span></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 mb-2 bg-gray-100 p-2 rounded-lg">
+                    <div class="text-center font-semibold text-white py-3 bg-red-500 rounded shadow-sm flex items-center justify-center">อา</div>
+                    <div class="text-center font-semibold text-white py-3 bg-yellow-500 rounded shadow-sm flex items-center justify-center">จ</div>
+                    <div class="text-center font-semibold text-white py-3 bg-pink-500 rounded shadow-sm flex items-center justify-center">อ</div>
+                    <div class="text-center font-semibold text-white py-3 bg-green-500 rounded shadow-sm flex items-center justify-center">พ</div>
+                    <div class="text-center font-semibold text-white py-3 bg-orange-500 rounded shadow-sm flex items-center justify-center">พฤ</div>
+                    <div class="text-center font-semibold text-white py-3 bg-blue-500 rounded shadow-sm flex items-center justify-center">ศ</div>
+                    <div class="text-center font-semibold text-white py-3 bg-purple-500 rounded shadow-sm flex items-center justify-center">ส</div>
+                </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 bg-gray-100 p-2 rounded-lg"></div>
+            </div>
+        </div>
+
+        <!-- ส่วนจัดการการจอง -->
+        <div id="manage-section" class="section hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl card-shadow p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">จัดการการจอง</h2>
+                    <div class="flex space-x-4">
+                        <input type="text" id="searchBookings" placeholder="ค้นหาชื่อผู้จอง..." class="form-input px-4 py-2 rounded-lg">
+                        <select id="filterRoom" class="form-input px-4 py-2 rounded-lg">
+                            <option value="">ทุกห้อง</option>
+                            <option value="ห้องประชุม 1 (รองรับ 13 คน)">ห้องประชุม 1</option>
+                            <option value="ห้องประชุม 2 (รองรับ 30 คน)">ห้องประชุม 2</option>
+                            <option value="ห้องประชุม 3 (รองรับ 100 คน)">ห้องประชุม 3</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="bookingsList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal รายละเอียดการจอง -->
+    <div id="bookingModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">รายละเอียดการจอง</h3>
+            <div id="modalContent" class="space-y-3"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="cancelBookingFromModal()" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">ยกเลิกการจอง</button>
+                <button onclick="closeModal()" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert hidden">
+        <div id="alertMessage"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
