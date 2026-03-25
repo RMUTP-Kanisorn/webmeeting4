@@ -5,7 +5,7 @@
 
 // 🔧 ตั้งค่า: วาง URL ของ Google Apps Script Web App ที่นี่
 //    (ได้มาหลังจาก Deploy → Manage Deployments → Copy Web App URL)
-const API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AWDtjMUCQReHCQDb9K6gB1Wp6Bon3fvrDJh6fC9Gc_bOpcw3hZwBqQIOIHPdhjFBCNchcNeHDVsELpoikliO31F6ciWNNVKxFMeVNbBx2J3MmdQbxxt2i-14Ib5Gfkf4BEzW4Qk-Z_32AV_kFaqPDUJiGCrC_CTurt2inRrAGhVK4xDQWdx1LkRR0MlKBaOhzjct_Sqrfz4lFI-DJz_Mn5Y1ruHN9AFffAzEmDyQ1ypMJn5w4QG5QiUhPFJmNzIp44J473LDqv0RtLzJORJMVpjHdl4PwScW3FLyZQ4NMW-5&lib=MCKyycMny6ffWFJ8s3VaHWu6sEYTzGfeE';
+const API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AWDtjMXhwfmbQF45WSF1sUHXBoPwAmn8l1LAYOStL35hsKnRIX4xPBDuvBHCmHT4KUxO2idYabs9j-yJ7nPALnWMm-5VqR6vVflWhmVyVBsXROacReAc772-Wqt8gwM3PxsE_hEC4djDFgnGT7nHuxBUL_DRbGdzvDmn0-0TLt0u1E2HBefoHG_7zjd1J_9IepQQ_4InJYWGKBpqrvI3YNmUfXTfrDtsk8IQsnwfD2gPjT960z2QoO_k4mkPXbpv-vaW1IvY-v3CgqtfE7jwCEmHU6uW1RQ1AtjiM4xOw28O&lib=MCKyycMny6ffWFJ8s3VaHWu6sEYTzGfeE';
 
 // ============================================================
 //  State
