@@ -1,11 +1,10 @@
 // ============================================================
 //  ระบบช่วยการประชุมออนไลน์ — Frontend Script
-//  ใช้ fetch() เรียก Google Apps Script Web App (API)
 // ============================================================
 
-// 🔧 ตั้งค่า: วาง URL ของ Google Apps Script Web App ที่นี่
-//    (ได้มาหลังจาก Deploy → Manage Deployments → Copy Web App URL)
-const API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AWDtjMXhwfmbQF45WSF1sUHXBoPwAmn8l1LAYOStL35hsKnRIX4xPBDuvBHCmHT4KUxO2idYabs9j-yJ7nPALnWMm-5VqR6vVflWhmVyVBsXROacReAc772-Wqt8gwM3PxsE_hEC4djDFgnGT7nHuxBUL_DRbGdzvDmn0-0TLt0u1E2HBefoHG_7zjd1J_9IepQQ_4InJYWGKBpqrvI3YNmUfXTfrDtsk8IQsnwfD2gPjT960z2QoO_k4mkPXbpv-vaW1IvY-v3CgqtfE7jwCEmHU6uW1RQ1AtjiM4xOw28O&lib=MCKyycMny6ffWFJ8s3VaHWu6sEYTzGfeE';
+// 1️⃣ วางลิงก์ที่ลงท้ายด้วย /exec ตรงนี้ (ลบลิงก์ echo ยาวๆ ทิ้งไปเลยครับ)
+// ตัวอย่าง: 'https://script.google.com/macros/s/AKfycb.../exec'
+const API_URL = 'https://script.google.com/macros/s/AKfycbxGzZ1CDAW1lfY92T2n5448gJ5PLpdoI4JvD0zR1lslAR_9pWRYhXgTTsiQQ2Qm7soLkg/exec';
 
 // ============================================================
 //  State
@@ -38,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ============================================================
-//  API Helper — fetch wrapper
+//  API Helper — fetch wrapper (แก้ไขปัญหา CORS แล้ว)
 // ============================================================
 async function apiGet(params = {}) {
     const url = new URL(API_URL);
@@ -50,7 +49,8 @@ async function apiGet(params = {}) {
 async function apiPost(body = {}) {
     const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // 🚨 แก้ไขตรงนี้: ใช้ text/plain เพื่อป้องกันเบราว์เซอร์บล็อก (CORS)
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(body)
     });
     return res.json();
@@ -115,6 +115,10 @@ function updateEndTimeOptions() {
 // ============================================================
 async function handleBookingSubmit(e) {
     e.preventDefault();
+    if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' || !API_URL.endsWith('/exec')) {
+        showAlert('กรุณาตั้งค่า API_URL ให้ถูกต้อง (ต้องลงท้ายด้วย /exec)', 'error');
+        return;
+    }
     showLoading();
 
     const data = {
@@ -150,6 +154,8 @@ async function handleBookingSubmit(e) {
 //  Load Bookings from API
 // ============================================================
 async function loadBookingsForCalendar(date = new Date()) {
+    if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') return;
+    
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     try {
