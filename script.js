@@ -3,7 +3,7 @@
 // ============================================================
  
 // 🔧 ใส่ URL Google Apps Script Web App ของคุณที่นี่
-const API_URL = 'https://script.google.com/macros/s/AKfycbxGzZ1CDAW1lfY92T2n5448gJ5PLpdoI4JvD0zR1lslAR_9pWRYhXgTTsiQQ2Qm7soLkg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwmAsU2u7vzg0Ff4xJN-3_TBB67ub6h8HEDTmHLkoHhmScob--kmGuROyqKzXrE5a6wcA/exec';
  
 // 🔧 ตั้งค่า Admin Credentials (แนะนำให้ย้ายไปตรวจสอบฝั่ง server จริง)
 const ADMIN_USER = 'admin';
