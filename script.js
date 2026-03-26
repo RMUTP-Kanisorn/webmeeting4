@@ -1,11 +1,11 @@
 // ============================================================
-//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2
+//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2 (Fixed API)
 // ============================================================
 
-// 🔧 ใส่ URL Google Apps Script Web App ของคุณที่นี่
+// 🔧 ใส่ URL Google Apps Script Web App ของคุณที่นี่ (เอาอันล่าสุดที่ Deploy มาใส่นะครับ)
 const API_URL = 'https://script.google.com/macros/s/AKfycbw1Nzn2_kNWdcHXQonXvRYoHMUzitiCRf8wSyJC1Pp1qyJRMc6fgPO1329h2AJJLpDe/exec';
 
-// 🔧 ตั้งค่า Admin Credentials (แนะนำให้ย้ายไปตรวจสอบฝั่ง server จริง)
+// 🔧 ตั้งค่า Admin Credentials (สำหรับการเข้าระบบแอดมิน)
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin1234';
 
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
     document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
 
-    // Admin filter listeners (attach after login reveals panel)
+    // Admin filter listeners
     document.addEventListener('input', e => {
         if (e.target.id === 'searchBookings') filterBookings();
     });
@@ -45,43 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-//  API Helper — ใช้ GET ทั้งหมดเพื่อหลีกเลี่ยง CORS กับ GAS
-//  GAS Web App ไม่รองรับ CORS preflight (OPTIONS) ดังนั้น POST
-//  จาก browser ภายนอกจะถูก block — ใช้ GET + encodeURIComponent แทน
+//  API Helper — แก้ไขเป็นแบบส่งตรงด้วย text/plain เพื่อแก้ปัญหา CORS
 // ============================================================
-async function apiCall(params = {}) {
-    if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
-        throw new Error('กรุณาใส่ API_URL ใน script.js ก่อนใช้งาน');
-    }
+async function apiGet(params = {}) {
+    if (!API_URL || !API_URL.startsWith('http')) throw new Error('API_URL ไม่ถูกต้อง');
     const url = new URL(API_URL);
-    Object.entries(params).forEach(([k, v]) => {
-        url.searchParams.append(k, String(v));
-    });
-    const res = await fetch(url.toString(), { redirect: 'follow' });
-    const text = await res.text();
-    try {
-        return JSON.parse(text);
-    } catch {
-        console.error('Response ไม่ใช่ JSON:', text.substring(0, 300));
-        throw new Error('ตอบกลับไม่ถูกต้อง — ตรวจสอบ API_URL และการ Deploy (Who has access: Anyone)');
-    }
+    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+    const res = await fetch(url.toString());
+    return res.json();
 }
 
-// alias เดิม
-async function apiGet(params = {}) { return apiCall(params); }
-async function apiPost(body = {})  {
-    // แปลง body format → GET params
-    const params = { action: body.action };
-    if (body.data)  params.data = encodeURIComponent(JSON.stringify(body.data));
-    if (body.id)    params.id   = body.id;
-    // approveBooking fields
-    if (body.email)     params.email     = body.email;
-    if (body.booker)    params.booker    = body.booker;
-    if (body.date)      params.date      = body.date;
-    if (body.startTime) params.startTime = body.startTime;
-    if (body.endTime)   params.endTime   = body.endTime;
-    if (body.room)      params.room      = body.room;
-    return apiCall(params);
+async function apiPost(body = {}) {
+    if (!API_URL || !API_URL.startsWith('http')) throw new Error('API_URL ไม่ถูกต้อง');
+    const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 💡 หัวใจสำคัญในการทะลุ CORS
+        body: JSON.stringify(body)
+    });
+    return res.json();
 }
 
 // ============================================================
@@ -282,7 +263,7 @@ async function nextMonth() {
 }
 
 // ============================================================
-//  Calendar Modal (รายละเอียดการจองแบบกล่องข้อความ)
+//  Calendar Modal
 // ============================================================
 function showBookingModal(dateStr, dayBookings) {
     const modal = document.getElementById('bookingModal');
@@ -360,10 +341,8 @@ function adminLogout() {
 //  Admin: Load Bookings List
 // ============================================================
 async function loadBookingsList() {
-    // Load all bookings for current month
     await loadBookingsForCalendar(currentDate);
 
-    // Update stats
     const pending  = bookings.filter(b => b.status !== 'approved').length;
     const approved = bookings.filter(b => b.status === 'approved').length;
     document.getElementById('statPending').textContent  = pending;
@@ -445,11 +424,9 @@ async function approveBooking(id, email, booker, date, startTime, endTime, room)
 
         if (result.ok) {
             showAlert(`✅ อนุมัติแล้ว! ส่งอีเมลยืนยันไปยัง ${email} เรียบร้อย`, 'success');
-            // Update local state
             const b = bookings.find(b => b.id === id);
             if (b) b.status = 'approved';
             renderBookingsList(bookings);
-            // Update stats
             document.getElementById('statPending').textContent  = bookings.filter(b => b.status !== 'approved').length;
             document.getElementById('statApproved').textContent = bookings.filter(b => b.status === 'approved').length;
         } else {
@@ -527,6 +504,6 @@ function showLoading() {
 
 function hideLoading() {
     const btn = document.getElementById('submitBtn');
-    btn.innerHTML = btn.dataset.orig || 'ส่งคำขอจองห้องประชุม';
+    btn.innerHTML = btn.dataset.orig || '📨 ส่งคำขอจองห้องประชุม';
     btn.disabled = false;
 }
