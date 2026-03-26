@@ -7,7 +7,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxGzZ1CDAW1lfY92T2n5448
  
 // 🔧 ตั้งค่า Admin Credentials (แนะนำให้ย้ายไปตรวจสอบฝั่ง server จริง)
 const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'admin1234';
+const ADMIN_PASS = '1234';
  
 // ============================================================
 //  State
