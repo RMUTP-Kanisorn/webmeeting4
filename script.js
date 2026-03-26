@@ -1,14 +1,14 @@
 // ============================================================
 //  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2
 // ============================================================
- 
+
 // 🔧 ใส่ URL Google Apps Script Web App ของคุณที่นี่
 const API_URL = 'https://script.google.com/macros/s/AKfycbw1Nzn2_kNWdcHXQonXvRYoHMUzitiCRf8wSyJC1Pp1qyJRMc6fgPO1329h2AJJLpDe/exec';
- 
+
 // 🔧 ตั้งค่า Admin Credentials (แนะนำให้ย้ายไปตรวจสอบฝั่ง server จริง)
 const ADMIN_USER = 'admin';
-const ADMIN_PASS = '1234';
- 
+const ADMIN_PASS = 'admin1234';
+
 // ============================================================
 //  State
 // ============================================================
@@ -16,17 +16,17 @@ let bookings = [];
 let currentDate = new Date();
 let currentSection = 'booking';
 let isAdminLoggedIn = false;
- 
+
 // ============================================================
 //  Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     generateTimeSlots();
     loadBookingsForCalendar(new Date());
- 
+
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('bookingDate').min = today;
- 
+
     document.getElementById('bookingDate').addEventListener('change', () => {
         updateAvailableSlots();
     });
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startTime').addEventListener('change', updateEndTimeOptions);
     document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
     document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
- 
+
     // Admin filter listeners (attach after login reveals panel)
     document.addEventListener('input', e => {
         if (e.target.id === 'searchBookings') filterBookings();
@@ -43,26 +43,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'filterRoom' || e.target.id === 'filterStatus') filterBookings();
     });
 });
- 
+
 // ============================================================
-//  API Helpers
+//  API Helper — ใช้ GET ทั้งหมดเพื่อหลีกเลี่ยง CORS กับ GAS
+//  GAS Web App ไม่รองรับ CORS preflight (OPTIONS) ดังนั้น POST
+//  จาก browser ภายนอกจะถูก block — ใช้ GET + encodeURIComponent แทน
 // ============================================================
-async function apiGet(params = {}) {
+async function apiCall(params = {}) {
+    if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        throw new Error('กรุณาใส่ API_URL ใน script.js ก่อนใช้งาน');
+    }
     const url = new URL(API_URL);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
-    const res = await fetch(url.toString());
-    return res.json();
-}
- 
-async function apiPost(body = {}) {
-    const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+    Object.entries(params).forEach(([k, v]) => {
+        url.searchParams.append(k, String(v));
     });
-    return res.json();
+    const res = await fetch(url.toString(), { redirect: 'follow' });
+    const text = await res.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        console.error('Response ไม่ใช่ JSON:', text.substring(0, 300));
+        throw new Error('ตอบกลับไม่ถูกต้อง — ตรวจสอบ API_URL และการ Deploy (Who has access: Anyone)');
+    }
 }
- 
+
+// alias เดิม
+async function apiGet(params = {}) { return apiCall(params); }
+async function apiPost(body = {})  {
+    // แปลง body format → GET params
+    const params = { action: body.action };
+    if (body.data)  params.data = encodeURIComponent(JSON.stringify(body.data));
+    if (body.id)    params.id   = body.id;
+    // approveBooking fields
+    if (body.email)     params.email     = body.email;
+    if (body.booker)    params.booker    = body.booker;
+    if (body.date)      params.date      = body.date;
+    if (body.startTime) params.startTime = body.startTime;
+    if (body.endTime)   params.endTime   = body.endTime;
+    if (body.room)      params.room      = body.room;
+    return apiCall(params);
+}
+
 // ============================================================
 //  Navigation
 // ============================================================
@@ -74,13 +95,13 @@ function showSection(section) {
     document.getElementById('nav-' + section)?.classList.add('active');
     document.getElementById(section + '-section').classList.remove('hidden');
     currentSection = section;
- 
+
     if (section === 'calendar') generateCalendar();
     else if (section === 'manage') {
         if (isAdminLoggedIn) loadBookingsList();
     }
 }
- 
+
 // ============================================================
 //  Room Selection (Card UI)
 // ============================================================
@@ -91,7 +112,7 @@ function selectRoom(roomValue, cardEl) {
     document.getElementById('roomError').classList.add('hidden');
     updateAvailableSlots();
 }
- 
+
 // ============================================================
 //  Time Slots
 // ============================================================
@@ -100,7 +121,7 @@ function generateTimeSlots() {
     const endSel = document.getElementById('endTime');
     startSel.innerHTML = '<option value="">เลือกเวลาเริ่มต้น</option>';
     endSel.innerHTML = '<option value="">เลือกเวลาสิ้นสุด</option>';
- 
+
     for (let hour = 8; hour <= 18; hour++) {
         for (let min = 0; min < 60; min += 15) {
             if (hour === 18 && min > 0) break;
@@ -110,12 +131,12 @@ function generateTimeSlots() {
         }
     }
 }
- 
+
 function updateAvailableSlots() {
     const date = document.getElementById('bookingDate').value;
     const room = document.getElementById('roomSelect').value;
     if (!date || !room) return;
- 
+
     const dayBookings = bookings.filter(b => b.date === date && b.room_id === room);
     Array.from(document.getElementById('startTime').querySelectorAll('option')).slice(1).forEach(opt => {
         const taken = dayBookings.some(b => opt.value >= b.start_time && opt.value < b.end_time);
@@ -124,7 +145,7 @@ function updateAvailableSlots() {
         opt.textContent = taken ? opt.value + ' (ไม่ว่าง)' : opt.value;
     });
 }
- 
+
 function updateEndTimeOptions() {
     const start = document.getElementById('startTime').value;
     if (!start) return;
@@ -132,25 +153,25 @@ function updateEndTimeOptions() {
         opt.disabled = opt.value <= start;
     });
 }
- 
+
 // ============================================================
 //  Booking Submit
 // ============================================================
 async function handleBookingSubmit(e) {
     e.preventDefault();
- 
+
     const room = document.getElementById('roomSelect').value;
     if (!room) {
         document.getElementById('roomError').classList.remove('hidden');
         document.getElementById('roomCards').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
- 
+
     showLoading();
- 
+
     const equipment = Array.from(document.querySelectorAll('input[name="equipment"]:checked')).map(cb => cb.value);
     const drinks = Array.from(document.querySelectorAll('input[name="drinks"]:checked')).map(cb => cb.value);
- 
+
     const data = {
         date:         document.getElementById('bookingDate').value,
         meeting_title: document.getElementById('meetingTitle').value,
@@ -165,7 +186,7 @@ async function handleBookingSubmit(e) {
         documents:    document.getElementById('documents').value,
         status:       'pending'
     };
- 
+
     try {
         const result = await apiPost({ action: 'saveBooking', data });
         if (!result.ok) {
@@ -182,10 +203,10 @@ async function handleBookingSubmit(e) {
         showAlert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ ตรวจสอบ API URL', 'error');
         console.error(err);
     }
- 
+
     hideLoading();
 }
- 
+
 // ============================================================
 //  Load Bookings
 // ============================================================
@@ -200,7 +221,7 @@ async function loadBookingsForCalendar(date = new Date()) {
         bookings = [];
     }
 }
- 
+
 // ============================================================
 //  Calendar
 // ============================================================
@@ -213,33 +234,33 @@ function generateCalendar() {
                    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     monthEl.textContent = `${names[month]} ${year + 543}`;
     grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">กำลังโหลด...</div>';
- 
+
     setTimeout(() => {
         grid.innerHTML = '';
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
- 
+
         for (let i = 0; i < firstDay; i++) {
             const emp = document.createElement('div');
             emp.className = 'bg-gray-200/40 rounded min-h-[52px]';
             grid.appendChild(emp);
         }
- 
+
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const dayBookings = bookings.filter(b => b.date === dateStr);
             const hasPending  = dayBookings.some(b => b.status === 'pending');
             const hasApproved = dayBookings.some(b => b.status === 'approved');
- 
+
             const el = document.createElement('div');
             let colorClass = 'bg-white text-gray-700 hover:bg-blue-50';
             if (hasPending && hasApproved) colorClass = 'day-mixed';
             else if (hasApproved) colorClass = 'day-approved';
             else if (hasPending) colorClass = 'day-pending';
- 
+
             el.className = `calendar-day rounded shadow-sm flex flex-col items-center justify-center font-semibold transition-all p-1 ${colorClass}`;
             el.innerHTML = `<span>${day}</span>${dayBookings.length > 0 ? `<span style="font-size:10px;font-weight:400;opacity:0.9">${dayBookings.length} จอง</span>` : ''}`;
- 
+
             if (dayBookings.length > 0) {
                 el.addEventListener('click', () => showBookingModal(dateStr, dayBookings));
             }
@@ -247,19 +268,19 @@ function generateCalendar() {
         }
     }, 50);
 }
- 
+
 async function previousMonth() {
     currentDate.setMonth(currentDate.getMonth() - 1);
     await loadBookingsForCalendar(currentDate);
     generateCalendar();
 }
- 
+
 async function nextMonth() {
     currentDate.setMonth(currentDate.getMonth() + 1);
     await loadBookingsForCalendar(currentDate);
     generateCalendar();
 }
- 
+
 // ============================================================
 //  Calendar Modal (รายละเอียดการจองแบบกล่องข้อความ)
 // ============================================================
@@ -269,7 +290,7 @@ function showBookingModal(dateStr, dayBookings) {
     const dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('th-TH', {
         year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
     });
- 
+
     content.innerHTML = `
         <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
             <p class="font-bold text-blue-800 text-base">📅 ${dateFormatted}</p>
@@ -295,17 +316,17 @@ function showBookingModal(dateStr, dayBookings) {
             </div>
         `).join('')}
     `;
- 
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 }
- 
+
 function closeModal() {
     const modal = document.getElementById('bookingModal');
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
- 
+
 // ============================================================
 //  Admin Login
 // ============================================================
@@ -314,7 +335,7 @@ function handleAdminLogin(e) {
     const user = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
     const errEl = document.getElementById('loginError');
- 
+
     if (user === ADMIN_USER && pass === ADMIN_PASS) {
         isAdminLoggedIn = true;
         errEl.classList.add('hidden');
@@ -326,7 +347,7 @@ function handleAdminLogin(e) {
         document.getElementById('adminPass').value = '';
     }
 }
- 
+
 function adminLogout() {
     isAdminLoggedIn = false;
     document.getElementById('admin-login-box').classList.remove('hidden');
@@ -334,42 +355,42 @@ function adminLogout() {
     document.getElementById('adminUser').value = '';
     document.getElementById('adminPass').value = '';
 }
- 
+
 // ============================================================
 //  Admin: Load Bookings List
 // ============================================================
 async function loadBookingsList() {
     // Load all bookings for current month
     await loadBookingsForCalendar(currentDate);
- 
+
     // Update stats
     const pending  = bookings.filter(b => b.status !== 'approved').length;
     const approved = bookings.filter(b => b.status === 'approved').length;
     document.getElementById('statPending').textContent  = pending;
     document.getElementById('statApproved').textContent = approved;
     document.getElementById('statTotal').textContent    = bookings.length;
- 
+
     renderBookingsList(bookings);
 }
- 
+
 function renderBookingsList(list) {
     const container = document.getElementById('bookingsList');
     const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date) || a.start_time.localeCompare(b.start_time));
- 
+
     if (sorted.length === 0) {
         container.innerHTML = '<p class="text-center text-gray-500 py-10">ไม่มีรายการจอง</p>';
         return;
     }
- 
+
     container.innerHTML = sorted.map(b => adminBookingCard(b)).join('');
 }
- 
+
 function adminBookingCard(b) {
     const isPending  = b.status !== 'approved';
     const statusBadge = isPending
         ? '<span class="badge badge-pending">⏳ รออนุมัติ</span>'
         : '<span class="badge badge-approved">✅ อนุมัติแล้ว</span>';
- 
+
     return `
         <div class="booking-item status-${isPending ? 'pending' : 'approved'}" id="card-${b.id}">
             <div class="booking-header">
@@ -380,7 +401,7 @@ function adminBookingCard(b) {
                 </div>
                 <div>${statusBadge}</div>
             </div>
- 
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mb-4">
                 <div>👤 <strong>ผู้จอง:</strong> ${b.booker}</div>
                 <div>📞 <strong>เบอร์:</strong> ${b.phone}</div>
@@ -389,7 +410,7 @@ function adminBookingCard(b) {
                 ${b.drinks    ? `<div>🥤 <strong>เครื่องดื่ม:</strong> ${b.drinks}</div>` : ''}
                 ${b.documents ? `<div class="sm:col-span-2">📝 <strong>หมายเหตุ:</strong> ${b.documents}</div>` : ''}
             </div>
- 
+
             <div class="booking-actions">
                 ${isPending ? `
                     <button class="btn-approve" onclick="approveBooking('${b.id}', '${b.email}', '${b.booker}', '${b.date}', '${b.start_time}', '${b.end_time}', '${b.room_id}')">
@@ -403,13 +424,13 @@ function adminBookingCard(b) {
         </div>
     `;
 }
- 
+
 // ============================================================
 //  Admin: Approve Booking + Send Email
 // ============================================================
 async function approveBooking(id, email, booker, date, startTime, endTime, room) {
     if (!confirm(`อนุมัติการจองและส่งอีเมลยืนยันถึง ${email} ?`)) return;
- 
+
     try {
         const result = await apiPost({
             action: 'approveBooking',
@@ -421,7 +442,7 @@ async function approveBooking(id, email, booker, date, startTime, endTime, room)
             endTime,
             room
         });
- 
+
         if (result.ok) {
             showAlert(`✅ อนุมัติแล้ว! ส่งอีเมลยืนยันไปยัง ${email} เรียบร้อย`, 'success');
             // Update local state
@@ -439,7 +460,7 @@ async function approveBooking(id, email, booker, date, startTime, endTime, room)
         console.error(err);
     }
 }
- 
+
 // ============================================================
 //  Admin: Delete Booking
 // ============================================================
@@ -462,7 +483,7 @@ async function confirmDeleteBooking(id) {
         showAlert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
     }
 }
- 
+
 // ============================================================
 //  Admin: Filter
 // ============================================================
@@ -470,7 +491,7 @@ function filterBookings() {
     const search = document.getElementById('searchBookings')?.value.toLowerCase() || '';
     const room   = document.getElementById('filterRoom')?.value || '';
     const status = document.getElementById('filterStatus')?.value || '';
- 
+
     const filtered = bookings.filter(b => {
         const matchSearch = b.booker.toLowerCase().includes(search) || b.phone.includes(search) || (b.email || '').toLowerCase().includes(search);
         const matchRoom   = !room   || b.room_id === room;
@@ -479,7 +500,7 @@ function filterBookings() {
     });
     renderBookingsList(filtered);
 }
- 
+
 // ============================================================
 //  Helpers
 // ============================================================
@@ -488,7 +509,7 @@ function formatDate(dateString) {
         year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
     });
 }
- 
+
 function showAlert(message, type = 'success') {
     const el = document.getElementById('alert');
     document.getElementById('alertMessage').textContent = message;
@@ -496,14 +517,14 @@ function showAlert(message, type = 'success') {
     el.classList.remove('hidden');
     setTimeout(() => el.classList.add('hidden'), 5000);
 }
- 
+
 function showLoading() {
     const btn = document.getElementById('submitBtn');
     btn.dataset.orig = btn.innerHTML;
     btn.innerHTML = '⏳ กำลังส่งคำขอ...';
     btn.disabled = true;
 }
- 
+
 function hideLoading() {
     const btn = document.getElementById('submitBtn');
     btn.innerHTML = btn.dataset.orig || 'ส่งคำขอจองห้องประชุม';
