@@ -1,25 +1,17 @@
 // ============================================================
-//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2 (Fixed API)
+//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2.3 (Fast CSV)
 // ============================================================
 
-// 🔧 ใส่ URL Google Apps Script Web App ของคุณที่นี่ (เอาอันล่าสุดที่ Deploy มาใส่นะครับ)
 const API_URL = 'https://script.google.com/macros/s/AKfycbw1Nzn2_kNWdcHXQonXvRYoHMUzitiCRf8wSyJC1Pp1qyJRMc6fgPO1329h2AJJLpDe/exec';
 
-// 🔧 ตั้งค่า Admin Credentials (สำหรับการเข้าระบบแอดมิน)
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin1234';
 
-// ============================================================
-//  State
-// ============================================================
 let bookings = [];
 let currentDate = new Date();
 let currentSection = 'booking';
 let isAdminLoggedIn = false;
 
-// ============================================================
-//  Init
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     generateTimeSlots();
     loadBookingsForCalendar(new Date());
@@ -35,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
     document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
 
-    // Admin filter listeners
     document.addEventListener('input', e => {
         if (e.target.id === 'searchBookings') filterBookings();
     });
@@ -44,30 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ============================================================
-//  API Helper — แก้ไขเป็นแบบส่งตรงด้วย text/plain เพื่อแก้ปัญหา CORS
-// ============================================================
-async function apiGet(params = {}) {
-    if (!API_URL || !API_URL.startsWith('http')) throw new Error('API_URL ไม่ถูกต้อง');
-    const url = new URL(API_URL);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
-    const res = await fetch(url.toString());
-    return res.json();
-}
-
 async function apiPost(body = {}) {
     if (!API_URL || !API_URL.startsWith('http')) throw new Error('API_URL ไม่ถูกต้อง');
     const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 💡 หัวใจสำคัญในการทะลุ CORS
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(body)
     });
     return res.json();
 }
 
-// ============================================================
-//  Navigation
-// ============================================================
 function showSection(section) {
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
     ['booking', 'calendar', 'manage'].forEach(s => {
@@ -83,9 +60,6 @@ function showSection(section) {
     }
 }
 
-// ============================================================
-//  Room Selection (Card UI)
-// ============================================================
 function selectRoom(roomValue, cardEl) {
     document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
     cardEl.classList.add('selected');
@@ -94,9 +68,6 @@ function selectRoom(roomValue, cardEl) {
     updateAvailableSlots();
 }
 
-// ============================================================
-//  Time Slots
-// ============================================================
 function generateTimeSlots() {
     const startSel = document.getElementById('startTime');
     const endSel = document.getElementById('endTime');
@@ -135,9 +106,6 @@ function updateEndTimeOptions() {
     });
 }
 
-// ============================================================
-//  Booking Submit
-// ============================================================
 async function handleBookingSubmit(e) {
     e.preventDefault();
 
@@ -188,14 +156,11 @@ async function handleBookingSubmit(e) {
     hideLoading();
 }
 
-// ============================================================
-//  Load Bookings
-// ============================================================
 async function loadBookingsForCalendar(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     try {
-        const result = await apiGet({ action: 'getBookings', month: `${year}-${month}` });
+        const result = await apiPost({ action: 'getBookings', month: `${year}-${month}` });
         if (result.ok) bookings = result.data;
     } catch (err) {
         console.error('โหลดข้อมูลไม่สำเร็จ:', err);
@@ -203,9 +168,6 @@ async function loadBookingsForCalendar(date = new Date()) {
     }
 }
 
-// ============================================================
-//  Calendar
-// ============================================================
 function generateCalendar() {
     const grid = document.getElementById('calendarGrid');
     const monthEl = document.getElementById('currentMonth');
@@ -262,9 +224,6 @@ async function nextMonth() {
     generateCalendar();
 }
 
-// ============================================================
-//  Calendar Modal
-// ============================================================
 function showBookingModal(dateStr, dayBookings) {
     const modal = document.getElementById('bookingModal');
     const content = document.getElementById('modalContent');
@@ -308,9 +267,6 @@ function closeModal() {
     modal.classList.remove('flex');
 }
 
-// ============================================================
-//  Admin Login
-// ============================================================
 function handleAdminLogin(e) {
     e.preventDefault();
     const user = document.getElementById('adminUser').value.trim();
@@ -337,9 +293,6 @@ function adminLogout() {
     document.getElementById('adminPass').value = '';
 }
 
-// ============================================================
-//  Admin: Load Bookings List
-// ============================================================
 async function loadBookingsList() {
     await loadBookingsForCalendar(currentDate);
 
@@ -404,9 +357,6 @@ function adminBookingCard(b) {
     `;
 }
 
-// ============================================================
-//  Admin: Approve Booking + Send Email
-// ============================================================
 async function approveBooking(id, email, booker, date, startTime, endTime, room) {
     if (!confirm(`อนุมัติการจองและส่งอีเมลยืนยันถึง ${email} ?`)) return;
 
@@ -438,9 +388,6 @@ async function approveBooking(id, email, booker, date, startTime, endTime, room)
     }
 }
 
-// ============================================================
-//  Admin: Delete Booking
-// ============================================================
 async function confirmDeleteBooking(id) {
     if (!confirm('ต้องการลบการจองนี้ใช่หรือไม่?')) return;
     try {
@@ -461,9 +408,6 @@ async function confirmDeleteBooking(id) {
     }
 }
 
-// ============================================================
-//  Admin: Filter
-// ============================================================
 function filterBookings() {
     const search = document.getElementById('searchBookings')?.value.toLowerCase() || '';
     const room   = document.getElementById('filterRoom')?.value || '';
@@ -476,6 +420,59 @@ function filterBookings() {
         return matchSearch && matchRoom && matchStatus;
     });
     renderBookingsList(filtered);
+}
+
+// ============================================================
+//  🚀 เพิ่มฟังก์ชันสร้างไฟล์ CSV และโหลดผ่านหน้าเว็บ 100%
+// ============================================================
+function exportToCSV() {
+    if (!bookings || bookings.length === 0) {
+        showAlert('ไม่มีข้อมูลสำหรับการดาวน์โหลด', 'error');
+        return;
+    }
+
+    // 1. กำหนดหัวคอลัมน์ภาษาไทย
+    const headers = ['รหัสการจอง', 'วันที่', 'หัวข้อการประชุม', 'ห้องประชุม', 'เวลาเริ่ม', 'เวลาสิ้นสุด', 'ผู้จอง', 'เบอร์ติดต่อ', 'อีเมล', 'อุปกรณ์', 'เครื่องดื่ม', 'หมายเหตุ', 'สถานะ'];
+    
+    // 2. จับคู่ข้อมูล
+    const csvRows = [];
+    csvRows.push(headers.join(',')); // ใส่แถวแรก
+
+    bookings.forEach(b => {
+        const rowData = [
+            b.id,
+            b.date,
+            b.meeting_title || '-',
+            b.room_id,
+            b.start_time,
+            b.end_time,
+            b.booker,
+            b.phone,
+            b.email || '-',
+            b.equipment || '-',
+            b.drinks || '-',
+            b.documents || '-',
+            b.status === 'approved' ? 'อนุมัติแล้ว' : 'รออนุมัติ'
+        ];
+
+        // ครอบแต่ละช่องด้วย "" เพื่อป้องกัน Error กรณีมีเครื่องหมาย คอมม่า (,) ข้างในข้อความ
+        const escapedRow = rowData.map(field => `"${String(field).replace(/"/g, '""')}"`);
+        csvRows.push(escapedRow.join(','));
+    });
+
+    // 3. รวมแถว และเพิ่ม BOM (\uFEFF) เพื่อให้ Excel อ่านสระภาษาไทยได้สมบูรณ์
+    const csvString = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    
+    // 4. สร้างลิงก์จำลองและสั่งคลิกโหลด
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ข้อมูลการจองห้องประชุม_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ============================================================
