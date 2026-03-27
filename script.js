@@ -1,5 +1,5 @@
 // ============================================================
-//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2.3 (Fast CSV)
+//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2.4 (Fast Load & CSV)
 // ============================================================
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbw1Nzn2_kNWdcHXQonXvRYoHMUzitiCRf8wSyJC1Pp1qyJRMc6fgPO1329h2AJJLpDe/exec';
@@ -19,9 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('bookingDate').min = today;
 
-    document.getElementById('bookingDate').addEventListener('change', () => {
-        updateAvailableSlots();
-    });
+    document.getElementById('bookingDate').addEventListener('change', updateAvailableSlots);
     document.getElementById('roomSelect').addEventListener('change', updateAvailableSlots);
     document.getElementById('startTime').addEventListener('change', updateEndTimeOptions);
     document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
@@ -145,7 +143,11 @@ async function handleBookingSubmit(e) {
             document.getElementById('bookingForm').reset();
             document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('roomSelect').value = '';
-            await loadBookingsForCalendar(new Date(data.date));
+            
+            // นำข้อมูลเข้าสู่ตัวแปรในเครื่องทันทีเพื่อให้ระบบไวขึ้น (ไม่ต้องรอโหลดใหม่)
+            data.id = result.id;
+            bookings.push(data);
+            
             if (currentSection === 'calendar') generateCalendar();
         }
     } catch (err) {
@@ -183,12 +185,14 @@ function generateCalendar() {
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+        // ช่องว่างก่อนเริ่มวันที่ 1
         for (let i = 0; i < firstDay; i++) {
             const emp = document.createElement('div');
             emp.className = 'bg-gray-200/40 rounded min-h-[52px]';
             grid.appendChild(emp);
         }
 
+        // สร้างช่องวันที่
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const dayBookings = bookings.filter(b => b.date === dateStr);
@@ -323,11 +327,17 @@ function adminBookingCard(b) {
         ? '<span class="badge badge-pending">⏳ รออนุมัติ</span>'
         : '<span class="badge badge-approved">✅ อนุมัติแล้ว</span>';
 
+    // จัดการแสดงผลวันที่ให้สวยงาม
+    let dateDisplay = b.date;
+    try {
+        if(b.date) dateDisplay = formatDate(b.date);
+    } catch(e) {}
+
     return `
         <div class="booking-item status-${isPending ? 'pending' : 'approved'}" id="card-${b.id}">
             <div class="booking-header">
                 <div>
-                    <div class="booking-date-time">📅 ${formatDate(b.date)} | ⏰ ${b.start_time} – ${b.end_time}</div>
+                    <div class="booking-date-time">📅 ${dateDisplay} | ⏰ ${b.start_time} – ${b.end_time}</div>
                     <div class="font-semibold text-gray-700 mt-1">${b.room_id}</div>
                     ${b.meeting_title ? `<div class="text-sm text-gray-500">📌 ${b.meeting_title}</div>` : ''}
                 </div>
@@ -380,7 +390,7 @@ async function approveBooking(id, email, booker, date, startTime, endTime, room)
             document.getElementById('statPending').textContent  = bookings.filter(b => b.status !== 'approved').length;
             document.getElementById('statApproved').textContent = bookings.filter(b => b.status === 'approved').length;
         } else {
-            showAlert(result.error || 'เกิดข้อผิดพลาด', 'error');
+            showAlert(result.error || 'เกิดข้อผิดพลาดในการอนุมัติ', 'error');
         }
     } catch (err) {
         showAlert('❌ ไม่สามารถเชื่อมต่อกับ API ได้', 'error');
@@ -423,7 +433,7 @@ function filterBookings() {
 }
 
 // ============================================================
-//  🚀 เพิ่มฟังก์ชันสร้างไฟล์ CSV และโหลดผ่านหน้าเว็บ 100%
+//  📥 ฟังก์ชัน โหลดไฟล์ CSV (เปิดใน Excel ได้ภาษาไทยไม่เพี้ยน)
 // ============================================================
 function exportToCSV() {
     if (!bookings || bookings.length === 0) {
@@ -431,12 +441,10 @@ function exportToCSV() {
         return;
     }
 
-    // 1. กำหนดหัวคอลัมน์ภาษาไทย
     const headers = ['รหัสการจอง', 'วันที่', 'หัวข้อการประชุม', 'ห้องประชุม', 'เวลาเริ่ม', 'เวลาสิ้นสุด', 'ผู้จอง', 'เบอร์ติดต่อ', 'อีเมล', 'อุปกรณ์', 'เครื่องดื่ม', 'หมายเหตุ', 'สถานะ'];
     
-    // 2. จับคู่ข้อมูล
     const csvRows = [];
-    csvRows.push(headers.join(',')); // ใส่แถวแรก
+    csvRows.push(headers.join(','));
 
     bookings.forEach(b => {
         const rowData = [
@@ -455,16 +463,15 @@ function exportToCSV() {
             b.status === 'approved' ? 'อนุมัติแล้ว' : 'รออนุมัติ'
         ];
 
-        // ครอบแต่ละช่องด้วย "" เพื่อป้องกัน Error กรณีมีเครื่องหมาย คอมม่า (,) ข้างในข้อความ
+        // ครอบข้อความด้วย "" เสมอเพื่อกันเครื่องหมายลูกน้ำ (,) ไปตีกับตัวคั่น CSV
         const escapedRow = rowData.map(field => `"${String(field).replace(/"/g, '""')}"`);
         csvRows.push(escapedRow.join(','));
     });
 
-    // 3. รวมแถว และเพิ่ม BOM (\uFEFF) เพื่อให้ Excel อ่านสระภาษาไทยได้สมบูรณ์
+    // เพิ่ม \uFEFF บังคับให้ไฟล์เป็น UTF-8 with BOM (ทำให้ Excel อ่านสระภาษาไทยออก)
     const csvString = '\uFEFF' + csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     
-    // 4. สร้างลิงก์จำลองและสั่งคลิกโหลด
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -479,9 +486,14 @@ function exportToCSV() {
 //  Helpers
 // ============================================================
 function formatDate(dateString) {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString('th-TH', {
-        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-    });
+    if (!dateString) return '';
+    try {
+        return new Date(dateString + 'T00:00:00').toLocaleDateString('th-TH', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+        });
+    } catch(e) {
+        return dateString;
+    }
 }
 
 function showAlert(message, type = 'success') {
