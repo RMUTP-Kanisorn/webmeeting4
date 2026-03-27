@@ -1,9 +1,11 @@
 // ============================================================
-//  ระบบช่วยการประชุมออนไลน์ — Frontend Script v2.4 (Fast Load & CSV)
+//  ระบบช่วยการประชุมออนไลน์ — Frontend Script
 // ============================================================
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbw1Nzn2_kNWdcHXQonXvRYoHMUzitiCRf8wSyJC1Pp1qyJRMc6fgPO1329h2AJJLpDe/exec';
+// 🔴 สำคัญมาก: เปลี่ยน URL ตรงนี้เป็น Web App URL ที่ได้จาก Google Apps Script ของคุณ
+const API_URL = 'https://script.google.com/macros/s/AKfycbylPNxg0RPnERPOvygcnBpaKtKIw4hOMOd1bELQzXWchD2Y_VTczVnZSq2mykEBkTfbZg/exec';
 
+// ตั้งค่ารหัสผ่านเข้าหน้า Admin
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin1234';
 
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     generateTimeSlots();
     loadBookingsForCalendar(new Date());
 
+    // ป้องกันการเลือกวันในอดีต
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('bookingDate').min = today;
 
@@ -33,16 +36,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// ฟังก์ชันเรียก API ไปยัง Google Apps Script
 async function apiPost(body = {}) {
-    if (!API_URL || !API_URL.startsWith('http')) throw new Error('API_URL ไม่ถูกต้อง');
+    if (!API_URL || API_URL === 'ใส่_WEB_APP_URL_จาก_GOOGLE_APPS_SCRIPT_ที่นี่') {
+        throw new Error('กรุณาตั้งค่า API_URL ในไฟล์ script.js ก่อนใช้งาน');
+    }
     const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ใช้ text/plain เลี่ยง CORS Preflight
         body: JSON.stringify(body)
     });
     return res.json();
 }
 
+// สลับหน้าจอ เมนูด้านบน
 function showSection(section) {
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
     ['booking', 'calendar', 'manage'].forEach(s => {
@@ -58,6 +65,7 @@ function showSection(section) {
     }
 }
 
+// การเลือกการ์ดห้องประชุม
 function selectRoom(roomValue, cardEl) {
     document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
     cardEl.classList.add('selected');
@@ -66,6 +74,7 @@ function selectRoom(roomValue, cardEl) {
     updateAvailableSlots();
 }
 
+// สร้าง Dropdown เลือกเวลา (ทุก 15 นาที)
 function generateTimeSlots() {
     const startSel = document.getElementById('startTime');
     const endSel = document.getElementById('endTime');
@@ -82,17 +91,18 @@ function generateTimeSlots() {
     }
 }
 
+// อัปเดตเวลาให้ไม่สามารถจองทับกันได้
 function updateAvailableSlots() {
     const date = document.getElementById('bookingDate').value;
     const room = document.getElementById('roomSelect').value;
     if (!date || !room) return;
 
-    const dayBookings = bookings.filter(b => b.date === date && b.room_id === room);
+    const dayBookings = bookings.filter(b => b.date === date && b.room_id === room && b.status !== 'rejected');
     Array.from(document.getElementById('startTime').querySelectorAll('option')).slice(1).forEach(opt => {
         const taken = dayBookings.some(b => opt.value >= b.start_time && opt.value < b.end_time);
         opt.disabled = taken;
         opt.style.color = taken ? '#ef4444' : '';
-        opt.textContent = taken ? opt.value + ' (ไม่ว่าง)' : opt.value;
+        opt.textContent = taken ? opt.value + ' (มีคนจองแล้ว)' : opt.value;
     });
 }
 
@@ -104,6 +114,7 @@ function updateEndTimeOptions() {
     });
 }
 
+// กด Submit จองห้อง
 async function handleBookingSubmit(e) {
     e.preventDefault();
 
@@ -139,25 +150,26 @@ async function handleBookingSubmit(e) {
         if (!result.ok) {
             showAlert(result.error || 'การจองล้มเหลว', 'error');
         } else {
-            showAlert('✅ ส่งคำขอจองเรียบร้อยแล้ว! รอการอนุมัติจากแอดมิน', 'success');
+            showAlert('✅ ส่งคำขอจองเรียบร้อยแล้ว! ข้อมูลถูกส่งไปที่ระบบแอดมิน (รอการอนุมัติ)', 'success');
             document.getElementById('bookingForm').reset();
             document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('roomSelect').value = '';
             
-            // นำข้อมูลเข้าสู่ตัวแปรในเครื่องทันทีเพื่อให้ระบบไวขึ้น (ไม่ต้องรอโหลดใหม่)
+            // นำข้อมูลเข้าตัวแปรในเครื่องทันทีเพื่อให้ระบบไวขึ้น (แสดงในปฏิทินทันทีเป็นสีส้ม)
             data.id = result.id;
             bookings.push(data);
             
             if (currentSection === 'calendar') generateCalendar();
         }
     } catch (err) {
-        showAlert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ ตรวจสอบ API URL', 'error');
+        showAlert('❌ ข้อมูลยังไม่ถูกส่ง: กรุณาใส่ API_URL ในไฟล์ script.js ให้ถูกต้อง', 'error');
         console.error(err);
     }
 
     hideLoading();
 }
 
+// โหลดข้อมูลการจองทั้งหมดของเดือนนั้น
 async function loadBookingsForCalendar(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -165,11 +177,12 @@ async function loadBookingsForCalendar(date = new Date()) {
         const result = await apiPost({ action: 'getBookings', month: `${year}-${month}` });
         if (result.ok) bookings = result.data;
     } catch (err) {
-        console.error('โหลดข้อมูลไม่สำเร็จ:', err);
-        bookings = [];
+        console.error('โหลดข้อมูลไม่สำเร็จ (อาจยังไม่ได้ตั้งค่า API_URL):', err);
+        bookings = []; // ให้เป็น Array ว่างไปก่อน
     }
 }
 
+// วาดปฏิทิน
 function generateCalendar() {
     const grid = document.getElementById('calendarGrid');
     const monthEl = document.getElementById('currentMonth');
@@ -178,7 +191,7 @@ function generateCalendar() {
     const names = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     monthEl.textContent = `${names[month]} ${year + 543}`;
-    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">กำลังโหลด...</div>';
+    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">กำลังโหลดข้อมูลจาก Google Sheet...</div>';
 
     setTimeout(() => {
         grid.innerHTML = '';
@@ -200,13 +213,14 @@ function generateCalendar() {
             const hasApproved = dayBookings.some(b => b.status === 'approved');
 
             const el = document.createElement('div');
+            // เงื่อนไขสีในปฏิทิน: ส้ม (รอ), เขียว (อนุมัติแล้ว)
             let colorClass = 'bg-white text-gray-700 hover:bg-blue-50';
             if (hasPending && hasApproved) colorClass = 'day-mixed';
-            else if (hasApproved) colorClass = 'day-approved';
-            else if (hasPending) colorClass = 'day-pending';
+            else if (hasApproved) colorClass = 'day-approved'; // อนุมัติแล้วขึ้นสีเขียว
+            else if (hasPending) colorClass = 'day-pending'; // รออนุมัติขึ้นสีส้ม
 
             el.className = `calendar-day rounded shadow-sm flex flex-col items-center justify-center font-semibold transition-all p-1 ${colorClass}`;
-            el.innerHTML = `<span>${day}</span>${dayBookings.length > 0 ? `<span style="font-size:10px;font-weight:400;opacity:0.9">${dayBookings.length} จอง</span>` : ''}`;
+            el.innerHTML = `<span>${day}</span>${dayBookings.length > 0 ? `<span style="font-size:10px;font-weight:400;opacity:0.9">${dayBookings.length} คิวจอง</span>` : ''}`;
 
             if (dayBookings.length > 0) {
                 el.addEventListener('click', () => showBookingModal(dateStr, dayBookings));
@@ -228,6 +242,7 @@ async function nextMonth() {
     generateCalendar();
 }
 
+// หน้าต่างแสดงข้อมูลเมื่อกดที่วันที่ในปฏิทิน
 function showBookingModal(dateStr, dayBookings) {
     const modal = document.getElementById('bookingModal');
     const content = document.getElementById('modalContent');
@@ -238,25 +253,21 @@ function showBookingModal(dateStr, dayBookings) {
     content.innerHTML = `
         <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
             <p class="font-bold text-blue-800 text-base">📅 ${dateFormatted}</p>
-            <p class="text-sm text-blue-600">${dayBookings.length} รายการจอง</p>
+            <p class="text-sm text-blue-600">มีการจองทั้งหมด ${dayBookings.length} รายการ</p>
         </div>
         ${dayBookings.map((b, i) => `
             <div class="modal-booking-entry status-${b.status || 'pending'}">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="font-bold text-gray-800">การจองที่ ${i+1}</span>
+                    <span class="font-bold text-gray-800">รายการจองที่ ${i+1}</span>
                     <span class="badge badge-${b.status === 'approved' ? 'approved' : 'pending'}">
-                        ${b.status === 'approved' ? '✅ อนุมัติแล้ว' : '⏳ รออนุมัติ'}
+                        ${b.status === 'approved' ? '✅ อนุมัติแล้ว' : '⏳ รออนุมัติจาก Admin'}
                     </span>
                 </div>
                 <div class="modal-row"><span class="modal-label">📌 หัวข้อ:</span><span class="modal-value">${b.meeting_title || '-'}</span></div>
-                <div class="modal-row"><span class="modal-label">🏠 ห้องประชุม:</span><span class="modal-value">${b.room_id}</span></div>
-                <div class="modal-row"><span class="modal-label">⏰ เวลา:</span><span class="modal-value">${b.start_time} – ${b.end_time}</span></div>
+                <div class="modal-row"><span class="modal-label">🏠 ห้อง:</span><span class="modal-value">${b.room_id}</span></div>
+                <div class="modal-row"><span class="modal-label">⏰ เวลา:</span><span class="modal-value">${b.start_time} – ${b.end_time} น.</span></div>
                 <div class="modal-row"><span class="modal-label">👤 ผู้จอง:</span><span class="modal-value">${b.booker}</span></div>
-                <div class="modal-row"><span class="modal-label">📞 เบอร์ติดต่อ:</span><span class="modal-value">${b.phone}</span></div>
-                <div class="modal-row"><span class="modal-label">📧 อีเมล:</span><span class="modal-value">${b.email || '-'}</span></div>
-                <div class="modal-row"><span class="modal-label">🖥️ อุปกรณ์:</span><span class="modal-value">${b.equipment || '-'}</span></div>
-                <div class="modal-row"><span class="modal-label">🥤 เครื่องดื่ม:</span><span class="modal-value">${b.drinks || '-'}</span></div>
-                ${b.documents ? `<div class="modal-row"><span class="modal-label">📝 หมายเหตุ:</span><span class="modal-value">${b.documents}</span></div>` : ''}
+                <div class="modal-row"><span class="modal-label">🖥️ อุปกรณ์:</span><span class="modal-value">${b.equipment || 'ไม่ระบุ'}</span></div>
             </div>
         `).join('')}
     `;
@@ -271,6 +282,7 @@ function closeModal() {
     modal.classList.remove('flex');
 }
 
+// ระบบ Login ของ Admin
 function handleAdminLogin(e) {
     e.preventDefault();
     const user = document.getElementById('adminUser').value.trim();
@@ -282,7 +294,7 @@ function handleAdminLogin(e) {
         errEl.classList.add('hidden');
         document.getElementById('admin-login-box').classList.add('hidden');
         document.getElementById('admin-panel').classList.remove('hidden');
-        loadBookingsList();
+        loadBookingsList(); // โหลดข้อมูลเมื่อ Login สำเร็จ
     } else {
         errEl.classList.remove('hidden');
         document.getElementById('adminPass').value = '';
@@ -297,6 +309,7 @@ function adminLogout() {
     document.getElementById('adminPass').value = '';
 }
 
+// โหลดข้อมูลในหน้า Admin
 async function loadBookingsList() {
     await loadBookingsForCalendar(currentDate);
 
@@ -311,95 +324,99 @@ async function loadBookingsList() {
 
 function renderBookingsList(list) {
     const container = document.getElementById('bookingsList');
+    // เรียงคิวจองที่รอดำเนินการขึ้นก่อน หรือตามวันที่
     const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date) || a.start_time.localeCompare(b.start_time));
 
     if (sorted.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-500 py-10">ไม่มีรายการจอง</p>';
+        container.innerHTML = '<p class="text-center text-gray-500 py-10 bg-gray-50 rounded-xl">ไม่มีข้อมูลการจองในระบบ</p>';
         return;
     }
 
     container.innerHTML = sorted.map(b => adminBookingCard(b)).join('');
 }
 
+// สร้างการ์ดแสดงในหน้า Admin
 function adminBookingCard(b) {
     const isPending  = b.status !== 'approved';
     const statusBadge = isPending
-        ? '<span class="badge badge-pending">⏳ รออนุมัติ</span>'
-        : '<span class="badge badge-approved">✅ อนุมัติแล้ว</span>';
+        ? '<span class="badge badge-pending">⏳ รออนุมัติ (Pending)</span>'
+        : '<span class="badge badge-approved">✅ อนุมัติแล้ว (Approved)</span>';
 
-    // จัดการแสดงผลวันที่ให้สวยงาม
     let dateDisplay = b.date;
-    try {
-        if(b.date) dateDisplay = formatDate(b.date);
-    } catch(e) {}
+    try { if(b.date) dateDisplay = formatDate(b.date); } catch(e) {}
 
     return `
         <div class="booking-item status-${isPending ? 'pending' : 'approved'}" id="card-${b.id}">
             <div class="booking-header">
                 <div>
-                    <div class="booking-date-time">📅 ${dateDisplay} | ⏰ ${b.start_time} – ${b.end_time}</div>
-                    <div class="font-semibold text-gray-700 mt-1">${b.room_id}</div>
+                    <div class="booking-date-time">📅 ${dateDisplay} | ⏰ ${b.start_time} – ${b.end_time} น.</div>
+                    <div class="font-semibold text-gray-800 mt-1">${b.room_id}</div>
                     ${b.meeting_title ? `<div class="text-sm text-gray-500">📌 ${b.meeting_title}</div>` : ''}
                 </div>
                 <div>${statusBadge}</div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mb-4 bg-white p-3 rounded-lg border">
                 <div>👤 <strong>ผู้จอง:</strong> ${b.booker}</div>
-                <div>📞 <strong>เบอร์:</strong> ${b.phone}</div>
+                <div>📞 <strong>เบอร์โทร:</strong> ${b.phone}</div>
                 <div>📧 <strong>อีเมล:</strong> ${b.email || '-'}</div>
                 ${b.equipment ? `<div>🖥️ <strong>อุปกรณ์:</strong> ${b.equipment}</div>` : ''}
                 ${b.drinks    ? `<div>🥤 <strong>เครื่องดื่ม:</strong> ${b.drinks}</div>` : ''}
-                ${b.documents ? `<div class="sm:col-span-2">📝 <strong>หมายเหตุ:</strong> ${b.documents}</div>` : ''}
+                ${b.documents ? `<div class="sm:col-span-2 mt-1">📝 <strong>หมายเหตุ:</strong> ${b.documents}</div>` : ''}
             </div>
 
             <div class="booking-actions">
                 ${isPending ? `
                     <button class="btn-approve" onclick="approveBooking('${b.id}', '${b.email}', '${b.booker}', '${b.date}', '${b.start_time}', '${b.end_time}', '${b.room_id}')">
-                        ✅ อนุมัติ &amp; ส่งอีเมล
+                        ✅ กดอนุมัติห้อง และ ส่งอีเมลยืนยัน
                     </button>
                 ` : `
-                    <button class="btn-approve" disabled>✅ อนุมัติแล้ว</button>
+                    <button class="btn-approve" disabled style="opacity:0.6">✅ อนุมัติเรียบร้อยแล้ว</button>
                 `}
-                <button class="btn-delete" onclick="confirmDeleteBooking('${b.id}')">🗑️ ลบ</button>
+                <button class="btn-delete" onclick="confirmDeleteBooking('${b.id}')">🗑️ ลบข้อมูล</button>
             </div>
         </div>
     `;
 }
 
+// Admin กดปุ่ม "อนุมัติ"
 async function approveBooking(id, email, booker, date, startTime, endTime, room) {
-    if (!confirm(`อนุมัติการจองและส่งอีเมลยืนยันถึง ${email} ?`)) return;
+    if (!confirm(`ยืนยันการอนุมัติห้องประชุม\nระบบจะส่งอีเมลแจ้งเตือนไปยัง ${email} ทันที?`)) return;
 
     try {
         const result = await apiPost({
             action: 'approveBooking',
-            id,
-            email,
-            booker,
-            date,
-            startTime,
-            endTime,
-            room
+            id, email, booker, date, startTime, endTime, room
         });
 
         if (result.ok) {
-            showAlert(`✅ อนุมัติแล้ว! ส่งอีเมลยืนยันไปยัง ${email} เรียบร้อย`, 'success');
+            if(result.emailError) {
+                 showAlert(`✅ อนุมัติสำเร็จ! แต่ระบบส่งอีเมลไม่ได้ (คุณอาจยังไม่ได้กด Allow Permission ใน Google Script)`, 'success');
+            } else {
+                 showAlert(`✅ อนุมัติเรียบร้อย! ส่งอีเมลยืนยันไปยัง ${email} แล้ว`, 'success');
+            }
+           
+            // เปลี่ยนสถานะในเครื่องเป็น Approved เพื่อให้ปฏิทินเปลี่ยนเป็นสีเขียวทันที
             const b = bookings.find(b => b.id === id);
             if (b) b.status = 'approved';
+            
+            // อัปเดตตัวเลขสถิติ และการ์ด
             renderBookingsList(bookings);
             document.getElementById('statPending').textContent  = bookings.filter(b => b.status !== 'approved').length;
             document.getElementById('statApproved').textContent = bookings.filter(b => b.status === 'approved').length;
+
         } else {
             showAlert(result.error || 'เกิดข้อผิดพลาดในการอนุมัติ', 'error');
         }
     } catch (err) {
-        showAlert('❌ ไม่สามารถเชื่อมต่อกับ API ได้', 'error');
+        showAlert('❌ ไม่สามารถเชื่อมต่อกับ Google Sheet ได้', 'error');
         console.error(err);
     }
 }
 
+// Admin กดลบข้อมูล
 async function confirmDeleteBooking(id) {
-    if (!confirm('ต้องการลบการจองนี้ใช่หรือไม่?')) return;
+    if (!confirm('ลบข้อมูลการจองนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
     try {
         const result = await apiPost({ action: 'deleteBooking', id });
         if (result.ok) {
@@ -409,7 +426,6 @@ async function confirmDeleteBooking(id) {
             document.getElementById('statTotal').textContent    = bookings.length;
             document.getElementById('statPending').textContent  = bookings.filter(b => b.status !== 'approved').length;
             document.getElementById('statApproved').textContent = bookings.filter(b => b.status === 'approved').length;
-            if (currentSection === 'calendar') generateCalendar();
         } else {
             showAlert(result.error || 'ลบไม่สำเร็จ', 'error');
         }
@@ -418,6 +434,7 @@ async function confirmDeleteBooking(id) {
     }
 }
 
+// กรองข้อมูลในหน้า Admin
 function filterBookings() {
     const search = document.getElementById('searchBookings')?.value.toLowerCase() || '';
     const room   = document.getElementById('filterRoom')?.value || '';
@@ -433,11 +450,11 @@ function filterBookings() {
 }
 
 // ============================================================
-//  📥 ฟังก์ชัน โหลดไฟล์ CSV (เปิดใน Excel ได้ภาษาไทยไม่เพี้ยน)
+//  📥 ดึงข้อมูลเป็นไฟล์ CSV ออกมา
 // ============================================================
 function exportToCSV() {
     if (!bookings || bookings.length === 0) {
-        showAlert('ไม่มีข้อมูลสำหรับการดาวน์โหลด', 'error');
+        showAlert('ยังไม่มีข้อมูลสำหรับการดาวน์โหลด', 'error');
         return;
     }
 
@@ -448,34 +465,23 @@ function exportToCSV() {
 
     bookings.forEach(b => {
         const rowData = [
-            b.id,
-            b.date,
-            b.meeting_title || '-',
-            b.room_id,
-            b.start_time,
-            b.end_time,
-            b.booker,
-            b.phone,
-            b.email || '-',
-            b.equipment || '-',
-            b.drinks || '-',
-            b.documents || '-',
-            b.status === 'approved' ? 'อนุมัติแล้ว' : 'รออนุมัติ'
+            b.id, b.date, b.meeting_title || '-', b.room_id, b.start_time, b.end_time,
+            b.booker, b.phone, b.email || '-', b.equipment || '-', b.drinks || '-',
+            b.documents || '-', b.status === 'approved' ? 'อนุมัติแล้ว' : 'รออนุมัติ'
         ];
-
-        // ครอบข้อความด้วย "" เสมอเพื่อกันเครื่องหมายลูกน้ำ (,) ไปตีกับตัวคั่น CSV
+        // ป้องกัน Error หากข้อมูลมีเครื่องหมายลูกน้ำ
         const escapedRow = rowData.map(field => `"${String(field).replace(/"/g, '""')}"`);
         csvRows.push(escapedRow.join(','));
     });
 
-    // เพิ่ม \uFEFF บังคับให้ไฟล์เป็น UTF-8 with BOM (ทำให้ Excel อ่านสระภาษาไทยออก)
+    // \uFEFF คือ BOM ทำให้โปรแกรม Excel ภาษาไทยอ่านตัวอักษรออก ไม่เพี้ยน
     const csvString = '\uFEFF' + csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `ข้อมูลการจองห้องประชุม_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `รายการจองห้องประชุม_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -483,7 +489,7 @@ function exportToCSV() {
 }
 
 // ============================================================
-//  Helpers
+//  ส่วนแสดงผล UI Helpers
 // ============================================================
 function formatDate(dateString) {
     if (!dateString) return '';
@@ -491,9 +497,7 @@ function formatDate(dateString) {
         return new Date(dateString + 'T00:00:00').toLocaleDateString('th-TH', {
             year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
         });
-    } catch(e) {
-        return dateString;
-    }
+    } catch(e) { return dateString; }
 }
 
 function showAlert(message, type = 'success') {
@@ -501,13 +505,13 @@ function showAlert(message, type = 'success') {
     document.getElementById('alertMessage').textContent = message;
     el.className = `alert ${type}`;
     el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 5000);
+    setTimeout(() => el.classList.add('hidden'), 6000);
 }
 
 function showLoading() {
     const btn = document.getElementById('submitBtn');
     btn.dataset.orig = btn.innerHTML;
-    btn.innerHTML = '⏳ กำลังส่งคำขอ...';
+    btn.innerHTML = '⏳ ระบบกำลังประมวลผล กรุณารอสักครู่...';
     btn.disabled = true;
 }
 

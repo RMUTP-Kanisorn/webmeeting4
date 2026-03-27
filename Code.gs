@@ -1,13 +1,14 @@
 // ============================================================
-//  ระบบช่วยการประชุมออนไลน์ — Google Apps Script v2
-//  Features: saveBooking, getBookings, approveBooking (+ email), deleteBooking
+//  ระบบช่วยการประชุมออนไลน์ — Google Apps Script Backend v2
+//  Features: บันทึก, ดึงข้อมูล, อนุมัติ (พร้อมส่งอีเมล), ลบ
 // ============================================================
 
-const SHEET_ID   = '1EABX69nIxYk4-7TglAFKfKExSXykvuesjWQ6kVZ8oUY';  // ← ใส่ Sheet ID ของคุณ
+// 🔧 ตั้งค่า: ใส่ Sheet ID ของคุณที่นี่ (เอามาจาก URL ของ Google Sheet)
+const SHEET_ID   = '1iKY0Sr59F6AOA7YunLcHamzLRWZYQwNJhOAy7tjkAFw';  
 const SHEET_NAME = 'Bookings';
 
 // ============================================================
-//  doGet
+//  doGet — รับ GET request (ดึงข้อมูล)
 // ============================================================
 function doGet(e) {
     try {
@@ -23,10 +24,11 @@ function doGet(e) {
 }
 
 // ============================================================
-//  doPost
+//  doPost — รับ POST request (บันทึก, อนุมัติ, ลบ)
 // ============================================================
 function doPost(e) {
     try {
+        // ใช้ JSON.parse จาก text/plain เพื่อเลี่ยงปัญหา CORS Preflight
         const body   = JSON.parse(e.postData.contents);
         const action = body.action;
 
@@ -41,7 +43,7 @@ function doPost(e) {
 }
 
 // ============================================================
-//  makeResponse
+//  makeResponse — สร้าง JSON Response
 // ============================================================
 function makeResponse(data) {
     const out = ContentService.createTextOutput(JSON.stringify(data));
@@ -50,12 +52,13 @@ function makeResponse(data) {
 }
 
 // ============================================================
-//  getBookings — ดึงข้อมูลทั้งหมดหรือกรองตามเดือน
+//  getBookings
 // ============================================================
 function getBookings(month) {
     const sheet = getSheet();
     const data  = sheet.getDataRange().getValues();
-    if (data.length <= 1) return [];
+    if (data.length <= 1) return []; // มีแค่ Header
+    
     const headers = data[0];
 
     return data.slice(1)
@@ -68,7 +71,7 @@ function getBookings(month) {
 }
 
 // ============================================================
-//  saveBooking — ตรวจสอบ conflict แล้วบันทึก (status: pending)
+//  saveBooking — บันทึกการจองใหม่
 // ============================================================
 function saveBooking(data) {
     if (!data.date || !data.room_id || !data.start_time || !data.end_time || !data.booker || !data.phone || !data.email) {
@@ -104,14 +107,14 @@ function saveBooking(data) {
         data.equipment || '',
         data.drinks    || '',
         data.documents || '',
-        'pending'        // status
+        'pending'        // สถานะเริ่มต้นคือรออนุมัติ
     ]);
 
     return { ok: true, id };
 }
 
 // ============================================================
-//  approveBooking — อัปเดตสถานะเป็น approved แล้วส่งอีเมล
+//  approveBooking — อนุมัติและส่งอีเมล
 // ============================================================
 function approveBooking(body) {
     const { id, email, booker, date, startTime, endTime, room } = body;
@@ -126,7 +129,7 @@ function approveBooking(body) {
     let updated = false;
     for (let i = 1; i < data.length; i++) {
         if (String(data[i][idCol]) === String(id)) {
-            sheet.getRange(i + 1, statusCol + 1).setValue('approved');
+            sheet.getRange(i + 1, statusCol + 1).setValue('approved'); // อัปเดตสถานะใน Sheet
             updated = true;
             break;
         }
@@ -134,14 +137,15 @@ function approveBooking(body) {
 
     if (!updated) return { ok: false, error: 'ไม่พบการจองที่ต้องการอนุมัติ' };
 
-    // ส่งอีเมลยืนยัน
+    // ส่งอีเมลยืนยันไปยังผู้จอง
     try {
-        const dateFormatted = Utilities.formatDate(new Date(date), 'Asia/Bangkok', 'dd/MM/yyyy');
+        const dateParts = date.split('-'); // แปลง YYYY-MM-DD เป็น DD/MM/YYYY
+        const dateFormatted = `${dateParts[2]}/${dateParts[1]}/${parseInt(dateParts[0]) + 543}`;
         const subject = '✅ ยืนยันการจองห้องประชุม — ' + room;
         const body_text = `
 เรียน คุณ${booker}
 
-การจองห้องประชุมของท่านได้รับการอนุมัติเรียบร้อยแล้ว 🎉
+การจองห้องประชุมของท่านได้รับการ อนุมัติ เรียบร้อยแล้ว 🎉
 
 รายละเอียดการจอง:
 ━━━━━━━━━━━━━━━━━━
@@ -150,12 +154,10 @@ function approveBooking(body) {
 ⏰ เวลา:          ${startTime} – ${endTime} น.
 ━━━━━━━━━━━━━━━━━━
 
-กรุณาตรงต่อเวลาและส่งคืนอุปกรณ์ต่าง ๆ ให้เรียบร้อยหลังใช้งาน
+กรุณาตรงต่อเวลาและส่งคืนอุปกรณ์ต่างๆ ให้เรียบร้อยหลังใช้งาน
 
-หากมีข้อสงสัยกรุณาติดต่อผู้ดูแลระบบ
-
-ขอบคุณที่ใช้บริการระบบจองห้องประชุม
-ระบบช่วยการประชุมออนไลน์
+หากมีข้อสงสัยกรุณาติดต่อแอดมินหรือผู้ดูแลระบบ
+ขอบคุณที่ใช้บริการระบบจองห้องประชุมออนไลน์
         `.trim();
 
         MailApp.sendEmail({
@@ -164,24 +166,21 @@ function approveBooking(body) {
             body: body_text
         });
     } catch (mailErr) {
-        // บันทึก log แต่ไม่ fail request
-        Logger.log('ส่งอีเมลไม่สำเร็จ: ' + mailErr.message);
-        return { ok: true, emailError: 'อนุมัติแล้ว แต่ส่งอีเมลไม่สำเร็จ: ' + mailErr.message };
+        return { ok: true, emailError: 'อนุมัติแล้ว แต่ส่งอีเมลไม่สำเร็จ (กรุณาเช็ค Permission): ' + mailErr.message };
     }
 
     return { ok: true };
 }
 
 // ============================================================
-//  deleteBooking — ลบแถวตาม id
+//  deleteBooking — ลบการจอง
 // ============================================================
 function deleteBooking(id) {
     if (!id) return { ok: false, error: 'ไม่พบรหัสการจอง' };
 
     const sheet = getSheet();
     const data  = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const idCol   = headers.indexOf('id');
+    const idCol   = data[0].indexOf('id');
 
     for (let i = 1; i < data.length; i++) {
         if (String(data[i][idCol]) === String(id)) {
@@ -193,7 +192,7 @@ function deleteBooking(id) {
 }
 
 // ============================================================
-//  getSheet — สร้าง Sheet พร้อม header อัตโนมัติ
+//  getSheet — สร้าง Sheet และ Header อัตโนมัติหากยังไม่มี
 // ============================================================
 function getSheet() {
     const ss    = SpreadsheetApp.openById(SHEET_ID);
@@ -212,10 +211,6 @@ function getSheet() {
             .setBackground('#1e3a8a')
             .setFontColor('#ffffff');
         sheet.setFrozenRows(1);
-        sheet.setColumnWidth(1, 120);
-        sheet.setColumnWidth(2, 100);
-        sheet.setColumnWidth(3, 200);
     }
-
     return sheet;
 }
