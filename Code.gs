@@ -4,7 +4,7 @@
 // ============================================================
 
 // 🔧 ตั้งค่า: ใส่ Sheet ID ของคุณที่นี่ (เอามาจาก URL ของ Google Sheet)
-const SHEET_ID   = '1iKY0Sr59F6AOA7YunLcHamzLRWZYQwNJhOAy7tjkAFw';  
+const SHEET_ID   = '1l18X59fRswRrugUz6kokw7h-oaD0JCYasCYYkn6Hpc0';  
 const SHEET_NAME = 'Bookings';
 
 // ============================================================
@@ -89,7 +89,8 @@ function saveBooking(data) {
         data.end_time > b.start_time
     );
     if (conflict) {
-        return { ok: false, error: `ห้องนี้มีการจองแล้วในช่วงเวลา ${conflict.start_time}–${conflict.end_time} กรุณาเลือกเวลาอื่น` };
+        // ประโยค error นี้เชื่อมโยงกับ javascript (script.js) เพื่อเปิดหน้าต่างแจ้งเตือน
+        return { ok: false, error: `ห้องนี้มีการจองแล้วในช่วงเวลา ${conflict.start_time}–${conflict.end_time}` };
     }
 
     const id = 'BK' + Date.now();
