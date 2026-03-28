@@ -7,7 +7,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_d
 
 // ตั้งค่ารหัสผ่านเข้าหน้า Admin
 const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'admin1234';
+const ADMIN_PASS = '112233';
 
 // 1. ดึงข้อมูลที่จำไว้ในเครื่อง (localStorage) ขึ้นมาก่อน เพื่อให้ข้อมูลแสดงผลทันทีเวลากด F5
 let bookings = JSON.parse(localStorage.getItem('cachedBookings')) || [];
