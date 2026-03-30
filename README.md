@@ -1,137 +1,73 @@
-# ระบบช่วยการประชุมออนไลน์ v2
+ระบบช่วยการประชุมออนไลน์ v2.1 (Security & Feature Update)
 
-เว็บแอปจองห้องประชุม — **GitHub Pages** (Frontend) + **Google Apps Script** (API) + **Google Sheets** (Database)
+เว็บแอปจองห้องประชุมแบบเต็มรูปแบบ — GitHub Pages (Frontend) + Google Apps Script (Backend API) + Google Sheets / Calendar (Database / Schedule)
 
----
+🚀 ฟีเจอร์ใหม่ที่อัปเดตใน v2.1
 
-## ฟีเจอร์ใหม่ใน v2
+🔒 Secure Admin Backend: ย้ายรหัสผ่านแอดมินไปฝั่งเซิร์ฟเวอร์ (GAS) ทำให้การแฮคขโมยรหัสผ่านจากหน้าเว็บเป็นไปไม่ได้
 
-| ฟีเจอร์ | รายละเอียด |
-|---------|-----------|
-| เลือกห้องด้วยรูปภาพ | Card รูปภาพแต่ละห้อง คลิกเพื่อเลือก |
-| หัวข้อการประชุม | ช่องกรอกหัวข้อ |
-| อุปกรณ์ | Checkbox: คอม, โปรเจ็คเตอร์, พอยเตอร์, ไมค์ลอย |
-| เครื่องดื่ม | Checkbox: น้ำเปล่า, กาแฟ |
-| อีเมลยืนยัน | กรอกอีเมล → รับอีเมลเมื่อแอดมินอนุมัติ |
-| ปฏิทินสีสถานะ | 🟠 รออนุมัติ / 🟢 อนุมัติแล้ว |
-| Modal รายละเอียด | กดวันในปฏิทิน → กล่องข้อความครบทุกข้อมูล |
-| Admin Login | หน้า Login เฉพาะแอดมิน |
-| Admin Panel | อนุมัติ + ส่งอีเมล + ลบ + ค้นหา + กรองสถานะ |
-| Dashboard Stats | จำนวนรออนุมัติ / อนุมัติแล้ว / ทั้งหมด |
+🚧 LockService Integration: ป้องกันปัญหาคนจองห้องพร้อมกัน (Race Condition) ระบบจะล็อกคิวรันทีละคน ช่วยให้การเช็คคิวซ้ำซ้อนแม่นยำ 100%
 
----
+📊 Admin Dashboard Charts: มีกราฟสถิติสรุปภาพรวม (Chart.js) แสดงสัดส่วนสถานะ และสถิติความนิยมของห้องในหน้า Admin Panel
 
-## โครงสร้างไฟล์
+📅 Google Calendar Auto-Sync: เมื่อแอดมินกด "อนุมัติ" ระบบจะเพิ่มกำหนดการลงใน Google Calendar ของแอดมินโดยอัตโนมัติ
 
-```
+โครงสร้างไฟล์ใหม่ (อัปเดตเป็น Single-page structure)
+
 meeting-room-system/
-├── index.html      ← หน้าเว็บหลัก
-├── style.css       ← สไตล์ชีท
-├── script.js       ← JavaScript (fetch API)
-├── Code.gs         ← Google Apps Script (วางใน GAS เท่านั้น)
+├── index.html      ← (ใหม่) รวมหน้าเว็บหลัก + สไตล์(CSS) + สคริปต์(JS) ในไฟล์เดียว (โหลดเร็วขึ้น)
+├── Code.gs         ← Google Apps Script (Backend)
 └── README.md
-```
 
----
 
-## ขั้นตอน Deploy
+🛠️ ขั้นตอนการอัปเดต (Deploy)
 
-### 1. สร้าง Google Sheet
-1. ไปที่ [sheets.google.com](https://sheets.google.com) → New
-2. คัดลอก **Sheet ID** จาก URL:
-   ```
-   https://docs.google.com/spreadsheets/d/ →[ID ตรงนี้]← /edit
-   ```
+1. นำโค้ดขึ้น Google Apps Script
 
-### 2. ตั้งค่า Google Apps Script
-1. ไปที่ [script.google.com](https://script.google.com) → New project
-2. วางโค้ดจาก `Code.gs` → แก้ไข:
-   ```javascript
-   const SHEET_ID = 'วาง-Sheet-ID-ของคุณตรงนี้';
-   ```
-3. บันทึก (Ctrl+S)
+เปิดโปรเจค Google Apps Script เดิมของคุณ
 
-### 3. Deploy เป็น Web App
-1. **Deploy → New deployment**
-2. Select type → **Web app**
-3. ตั้งค่า:
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-4. คลิก **Deploy** → อนุญาต permission
-5. **คัดลอก Web App URL**
+คัดลอกโค้ดจากไฟล์ Code.gs อันใหม่ไปทับของเดิม
 
-### 4. ใส่ URL ใน script.js
-```javascript
-const API_URL = 'https://script.google.com/macros/s/.../exec';
-```
+ข้อควรระวัง: - อย่าลืมใส่ SHEET_ID ของคุณในบรรทัดที่ 8
 
-### 5. ตั้งค่า Admin Password
-แก้ไขใน `script.js`:
-```javascript
-const ADMIN_USER = 'admin';      // ← เปลี่ยนชื่อผู้ใช้
-const ADMIN_PASS = 'admin1234';  // ← เปลี่ยนรหัสผ่าน
-```
+คุณสามารถเปลี่ยนรหัสผ่านแอดมินในบรรทัดที่ 12, 13
 
-### 6. Push ขึ้น GitHub
-```bash
-git init
-git add index.html style.css script.js README.md
-git commit -m "Meeting room system v2"
-git remote add origin https://github.com/USERNAME/REPO.git
-git branch -M main
-git push -u origin main
-```
+CALENDAR_ID แนะนำให้ใช้คำว่า 'primary' (จะบันทึกลงปฏิทินหลักของบัญชี Gmail นั้น)
 
-### 7. เปิด GitHub Pages
-Settings → Pages → Branch: **main** → Save
+2. อนุมัติสิทธิ์ (Permission) สำหรับ Google Calendar
 
-URL เว็บจะเป็น: `https://USERNAME.github.io/REPO/`
+เนื่องจากมีการใช้ Calendar API เพิ่มเข้ามา คุณจะต้องทำการขอสิทธิ์ใหม่:
 
----
+กดปุ่ม Run (เรียกใช้) ฟังก์ชันอะไรก็ได้สัก 1 ครั้งใน Apps Script (เช่น ฟังก์ชัน doGet)
 
-## โครงสร้างข้อมูลใน Google Sheet
+ระบบจะขึ้นแจ้งเตือนให้ Review Permissions (ตรวจสอบสิทธิ์)
 
-| Column | ความหมาย |
-|--------|---------|
-| id | รหัสการจอง (BK + timestamp) |
-| date | วันที่จอง (YYYY-MM-DD) |
-| meeting_title | หัวข้อการประชุม |
-| room_id | ชื่อห้องประชุม |
-| start_time | เวลาเริ่ม |
-| end_time | เวลาสิ้นสุด |
-| booker | ชื่อผู้จอง |
-| phone | เบอร์ติดต่อ |
-| email | อีเมลยืนยัน |
-| equipment | อุปกรณ์ที่ขอ |
-| drinks | เครื่องดื่มที่ขอ |
-| documents | หมายเหตุ |
-| status | pending / approved |
+ให้ล็อกอินบัญชี Gmail > เลือก Advanced (ขั้นสูง) > ไปที่โปรเจค (ไม่ปลอดภัย)
 
----
+กด Allow (อนุญาต) เพื่อให้โปรเจคสามารถแก้ไข Calendar ของคุณได้
 
-## การ Update โค้ด
+3. Deploy เป็น Web App ใหม่ (บังคับ)
 
-**Frontend (GitHub):**
-```bash
-git add .
-git commit -m "แก้ไข: ..."
-git push
-```
+มุมขวาบน กด Deploy > Manage deployments (จัดการการทำให้ใช้งานได้)
 
-**Backend (Google Apps Script):**
-Deploy → Manage deployments → แก้ไข → **New version** → Deploy
+กดสัญลักษณ์ ✏️ เพื่อแก้ไข
 
----
+ตรง Version ให้เลือกเป็น New version (เวอร์ชันใหม่)
 
-## แก้ปัญหาที่พบบ่อย
+กด Deploy
 
-**อีเมลไม่ถูกส่ง:**
-- ตรวจสอบว่า Google account มีสิทธิ์ใช้ `MailApp`
-- Deploy ใหม่แล้วอนุญาต permission ที่ขอ
+คัดลอก Web App URL อันใหม่มาไว้
 
-**ข้อมูลไม่โหลด:**
-- ตรวจสอบ `API_URL` ใน `script.js`
-- ตรวจสอบ "Who has access: Anyone" ตอน Deploy
+4. อัปเดตฝั่ง Frontend
 
-**Login admin ไม่ได้:**
-- ตรวจสอบ `ADMIN_USER` และ `ADMIN_PASS` ใน `script.js`
+นำ Web App URL ที่ได้จากข้อ 3 ไปวางในไฟล์ index.html บรรทัดที่ 465 ตรงตัวแปร const API_URL = '...'
+
+อัปโหลดไฟล์ index.html ขึ้น GitHub แทนที่ชุดไฟล์เดิมของคุณ (index.html, style.css, script.js เดิม ลบออกได้เลยเพราะถูกรวมกันไว้แล้ว)
+
+การใช้งานหน้า Admin
+
+เปิดหน้าเว็บไปที่มุมขวาบนสุด กดปุ่มฟันเฟือง ⚙️
+
+กรอก Username: admin และ Password: 112233 (หรือตามที่คุณแก้ใน Code.gs)
+
+คุณจะเห็น Dashboard ที่มีกราฟสถิติใหม่ และสามารถอนุมัติได้เลย
