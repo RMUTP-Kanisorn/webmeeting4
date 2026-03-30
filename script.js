@@ -1,11 +1,4 @@
-        // ============================================================
-        //  ระบบช่วยการประชุมออนไลน์ — Frontend Script
-        // ============================================================
-
-        // 🔴 สำคัญมาก: เปลี่ยน URL ตรงนี้เป็น Web App URL ที่ได้จาก Google Apps Script ของคุณ
         const API_URL = 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec';
-
-        // 🟢 นำรหัสผ่านออกจากฝั่ง Client แล้ว ย้ายไปที่ Code.gs แทนเพื่อความปลอดภัย (ข้อ 1)
 
         let bookings = JSON.parse(localStorage.getItem('cachedBookings')) || [];
         let currentDate = new Date();

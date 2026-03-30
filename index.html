@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบช่วยการประชุมออนไลน์</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- แก้ไข 1: เพิ่มการลิงก์ไฟล์ CSS ที่หายไป -->
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -54,7 +56,8 @@
  
                             <div class="room-card" onclick="selectRoom('ห้องประชุม 1 (รองรับ 13 คน)', this)" data-room="1">
                                 <div class="room-img-wrap">
-                                    <img src="ห้องประชุม1.jpg" alt="ห้องประชุม 1" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+1'">
+                                    <!-- แก้ไข 2: เพิ่ม path image/ ให้ถูกต้อง -->
+                                    <img src="image/ห้องประชุม1.jpg" alt="ห้องประชุม 1" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+1'">
                                     <div class="room-overlay"><span>✓ เลือกห้องนี้</span></div>
                                 </div>
                                 <div class="room-info">
@@ -66,7 +69,8 @@
  
                             <div class="room-card" onclick="selectRoom('ห้องประชุม 2 (รองรับ 30 คน)', this)" data-room="2">
                                 <div class="room-img-wrap">
-                                    <img src="ห้องประชุม2.jpg" alt="ห้องประชุม 2" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+2'">
+                                    <!-- แก้ไข 2: เพิ่ม path image/ ให้ถูกต้อง -->
+                                    <img src="image/ห้องประชุม2.jpg" alt="ห้องประชุม 2" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+2'">
                                     <div class="room-overlay"><span>✓ เลือกห้องนี้</span></div>
                                 </div>
                                 <div class="room-info">
@@ -78,7 +82,8 @@
  
                             <div class="room-card" onclick="selectRoom('ห้องประชุม 3 (รองรับ 100 คน)', this)" data-room="3">
                                 <div class="room-img-wrap">
-                                    <img src="ห้องประชุม3.jpg" alt="ห้องประชุม 3" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+3'">
+                                    <!-- แก้ไข 2: เพิ่ม path image/ ให้ถูกต้อง -->
+                                    <img src="image/ห้องประชุม3.jpg" alt="ห้องประชุม 3" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+3'">
                                     <div class="room-overlay"><span>✓ เลือกห้องนี้</span></div>
                                 </div>
                                 <div class="room-info">
