@@ -1,193 +1,170 @@
-        * { font-family: 'Maledpan', sans-serif; }
+* { font-family: 'Kanit', sans-serif; } 
 
-        body {
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-        /* Card Formats */
-        .card-shadow { 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
-        }
+/* Card Formats */
+.card-shadow { 
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
+}
 
-        /* Navigation Buttons */
-        .nav-btn { 
-            display: flex; align-items: center; gap: 0.5rem;
-            font-weight: 500; 
-            padding: 8px 16px; 
-            border-radius: 9999px; 
-            transition: all 0.2s ease; 
-        }
-        @media (min-width: 768px) { .nav-btn { padding: 10px 24px; } }
-        
-        .nav-btn.active { 
-            background-color: #3b82f6; 
-            color: white;
-            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
-        }
-        
-        /* Light mode Nav hover */
-        html:not(.dark) .nav-btn:not(.active):hover { background-color: #f3f4f6; color: #1f2937; }
-        html:not(.dark) .nav-btn:not(.active) { color: #4b5563; }
-        
-        /* Dark mode Nav hover */
-        html.dark .nav-btn:not(.active):hover { background-color: #374151; color: #f3f4f6; }
-        html.dark .nav-btn:not(.active) { color: #9ca3af; }
+/* Navigation Buttons */
+.nav-btn { 
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 500; 
+    padding: 8px 16px; 
+    border-radius: 9999px; 
+    transition: all 0.2s ease; 
+}
+@media (min-width: 768px) { .nav-btn { padding: 10px 24px; } }
 
-        .section { display: block; animation: fadeIn 0.4s ease; }
-        .section.hidden { display: none; }
+.nav-btn.active { 
+    background-color: #3b82f6; 
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+}
 
-        /* Form Inputs */
-        .form-input { 
-            transition: all 0.3s ease; 
-            border-width: 1px;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            outline: none;
-        }
-        /* Light Input */
-        html:not(.dark) .form-input { background: #f9fafb; border-color: #e5e7eb; color: #111827; }
-        html:not(.dark) .form-input:focus { background: white; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        /* Dark Input */
-        html.dark .form-input { background: #2d2d2d; border-color: #404040; color: #f3f4f6; }
-        html.dark .form-input:focus { background: #1e1e1e; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+html:not(.dark) .nav-btn:not(.active):hover { background-color: #f3f4f6; color: #1f2937; }
+html:not(.dark) .nav-btn:not(.active) { color: #4b5563; }
+html.dark .nav-btn:not(.active):hover { background-color: #374151; color: #f3f4f6; }
+html.dark .nav-btn:not(.active) { color: #9ca3af; }
 
-        /* Room Cards */
-        .room-card {
-            border-width: 2px;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        html:not(.dark) .room-card { background: white; border-color: #e5e7eb; }
-        html.dark .room-card { background: #1e1e1e; border-color: #404040; }
+.section { display: block; animation: fadeIn 0.4s ease; }
+.section.hidden { display: none; }
 
-        .room-card:hover { transform: translateY(-4px); border-color: #3b82f6; }
-        html:not(.dark) .room-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.05); }
-        html.dark .room-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+/* Form Inputs */
+.form-input { 
+    transition: all 0.3s ease; 
+    border-width: 1px;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    outline: none;
+}
+html:not(.dark) .form-input { background: #f9fafb; border-color: #e5e7eb; color: #111827; }
+html:not(.dark) .form-input:focus { background: white; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+html.dark .form-input { background: #2d2d2d; border-color: #404040; color: #f3f4f6; }
+html.dark .form-input:focus { background: #1e1e1e; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
 
-        .room-card.selected { border-color: #2563eb; }
-        html:not(.dark) .room-card.selected { background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
-        html.dark .room-card.selected { background: rgba(37,99,235,0.1); box-shadow: 0 0 0 3px rgba(37,99,235,0.4); }
-        
-        .room-card.selected .room-overlay { opacity: 1; }
+/* Room Cards */
+.room-card {
+    border-width: 2px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+html:not(.dark) .room-card { background: white; border-color: #e5e7eb; }
+html.dark .room-card { background: #1e1e1e; border-color: #404040; }
+.room-card:hover { transform: translateY(-4px); border-color: #3b82f6; }
+html:not(.dark) .room-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.05); }
+html.dark .room-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+.room-card.selected { border-color: #2563eb; }
+html:not(.dark) .room-card.selected { background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+html.dark .room-card.selected { background: rgba(37,99,235,0.1); box-shadow: 0 0 0 3px rgba(37,99,235,0.4); }
+.room-card.selected .room-overlay { opacity: 1; }
+.room-img-wrap { position: relative; overflow: hidden; height: 120px; }
+.room-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.room-card:hover .room-img { transform: scale(1.05); }
+.room-overlay {
+    position: absolute; inset: 0;
+    background: rgba(37,99,235,0.8);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    opacity: 0; transition: opacity 0.3s ease;
+    color: white; font-weight: 600;
+}
 
-        .room-img-wrap { position: relative; overflow: hidden; height: 120px; }
-        .room-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .room-card:hover .room-img { transform: scale(1.05); }
+/* Checkbox Cards */
+.checkbox-card-label { cursor: pointer; }
+.checkbox-card-label input[type="checkbox"] { display: none; }
+.checkbox-card {
+    border-width: 2px;
+    border-radius: 10px;
+    padding: 14px 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.25s ease;
+    text-align: center; user-select: none; height: 100%;
+}
+html:not(.dark) .checkbox-card { background: white; border-color: #e5e7eb; }
+html.dark .checkbox-card { background: #1e1e1e; border-color: #404040; }
+html:not(.dark) .checkbox-card-label:hover .checkbox-card { border-color: #93c5fd; background: #f8fafc; }
+html.dark .checkbox-card-label:hover .checkbox-card { border-color: #3b82f6; background: #2d2d2d; }
+html:not(.dark) .checkbox-card-label input:checked + .checkbox-card { border-color: #2563eb; background: #eff6ff; }
+html.dark .checkbox-card-label input:checked + .checkbox-card { border-color: #3b82f6; background: rgba(59,130,246,0.15); }
 
-        .room-overlay {
-            position: absolute; inset: 0;
-            background: rgba(37,99,235,0.8);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            opacity: 0; transition: opacity 0.3s ease;
-            color: white; font-weight: 600;
-        }
+/* Calendar Status Colors */
+.day-pending { background-color: #f97316 !important; color: white !important; cursor: pointer; border: none;}
+.day-approved { background-color: #10b981 !important; color: white !important; cursor: pointer; border: none;}
+.day-mixed { background: linear-gradient(135deg, #f97316 50%, #10b981 50%) !important; color: white !important; cursor: pointer; border: none;}
 
-        /* Checkbox Cards */
-        .checkbox-card-label { cursor: pointer; }
-        .checkbox-card-label input[type="checkbox"] { display: none; }
-        .checkbox-card {
-            border-width: 2px;
-            border-radius: 10px;
-            padding: 14px 8px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.25s ease;
-            text-align: center; user-select: none; height: 100%;
-        }
-        
-        html:not(.dark) .checkbox-card { background: white; border-color: #e5e7eb; }
-        html.dark .checkbox-card { background: #1e1e1e; border-color: #404040; }
+/* Modal */
+.modal { 
+    position: fixed; inset: 0; 
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); 
+    display: flex; align-items: center; justify-content: center; 
+    z-index: 1000; padding: 16px; animation: fadeIn 0.2s ease;
+}
+.modal.hidden { display: none; }
+.modal-content { 
+    border-radius: 16px; padding: 24px; 
+    width: 100%; max-width: 560px; max-height: 90vh; 
+    overflow-y: auto; animation: slideUp 0.3s ease;
+}
+html:not(.dark) .modal-content { background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+html.dark .modal-content { background: #1e1e1e; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #404040; }
 
-        html:not(.dark) .checkbox-card-label:hover .checkbox-card { border-color: #93c5fd; background: #f8fafc; }
-        html.dark .checkbox-card-label:hover .checkbox-card { border-color: #3b82f6; background: #2d2d2d; }
+/* Badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;}
+.badge-pending { background: rgba(249,115,22,0.1); color: #ea580c; border: 1px solid rgba(249,115,22,0.2); }
+.badge-approved { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+.badge-rejected { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+html.dark .badge-pending { background: rgba(249,115,22,0.2); color: #fdba74; }
+html.dark .badge-approved { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+html.dark .badge-rejected { background: rgba(239,68,68,0.2); color: #fca5a5; }
 
-        html:not(.dark) .checkbox-card-label input:checked + .checkbox-card {
-            border-color: #2563eb; background: #eff6ff;
-        }
-        html.dark .checkbox-card-label input:checked + .checkbox-card {
-            border-color: #3b82f6; background: rgba(59,130,246,0.15);
-        }
+/* Admin Booking Item */
+.booking-item { border-radius: 12px; padding: 16px; transition: all 0.2s ease; margin-bottom: 16px; border-width: 1px;}
+html:not(.dark) .booking-item { background: #ffffff; border-color: #e5e7eb; }
+html.dark .booking-item { background: #2d2d2d; border-color: #404040; }
+.booking-item.status-pending { border-left: 4px solid #f97316; }
+.booking-item.status-approved { border-left: 4px solid #10b981; }
+.booking-item.status-rejected { border-left: 4px solid #ef4444; opacity: 0.7; }
 
-        /* Calendar Days */
-        .calendar-day { transition: all 0.25s ease; min-height: 50px; font-size: 0.85rem; border-radius: 6px; }
-        @media (min-width: 768px) { .calendar-day { min-height: 60px; font-size: 0.95rem; } }
-        .calendar-day:hover:not(.empty-day) { transform: translateY(-2px); z-index: 10; position: relative;}
+/* Buttons */
+.btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 0.875rem;}
+.btn-approve { background: #10b981; color: white; }
+.btn-approve:hover { background: #059669; }
+.btn-approve:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+.btn-reject { background: #f97316; color: white; }
+.btn-reject:hover { background: #ea580c; }
+.btn-delete { background: #ef4444; color: white; }
+.btn-delete:hover { background: #dc2626; }
 
-        html:not(.dark) .calendar-day { background: white; border: 1px solid #f3f4f6; }
-        html.dark .calendar-day { background: #2d2d2d; border: 1px solid #404040; color: #e5e7eb; }
-        html:not(.dark) .calendar-day:hover:not(.empty-day) { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #cbd5e1;}
-        html.dark .calendar-day:hover:not(.empty-day) { box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-color: #6b7280;}
+/* Alert */
+.alert { 
+    position: fixed; top: 20px; right: 20px; left: 20px;
+    padding: 16px 20px; border-radius: 12px; 
+    color: white; font-weight: 500;
+    z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: flex; align-items: center; gap: 12px;
+}
+@media (min-width: 768px) { .alert { left: auto; min-width: 300px; max-width: 450px; } }
+.alert.hidden { display: none; }
+.alert.success { background: #10b981; }
+.alert.error { background: #ef4444; }
 
-        /* Calendar Status Colors */
-        .day-pending { background-color: #f97316 !important; color: white !important; cursor: pointer; border: none;}
-        .day-approved { background-color: #10b981 !important; color: white !important; cursor: pointer; border: none;}
-        .day-mixed { background: linear-gradient(135deg, #f97316 50%, #10b981 50%) !important; color: white !important; cursor: pointer; border: none;}
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
 
-        /* Modal */
-        .modal { 
-            position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); 
-            display: flex; align-items: center; justify-content: center; 
-            z-index: 1000; padding: 16px; animation: fadeIn 0.2s ease;
-        }
-        .modal.hidden { display: none; }
-        .modal-content { 
-            border-radius: 16px; padding: 24px; 
-            width: 100%; max-width: 560px; max-height: 90vh; 
-            overflow-y: auto; animation: slideUp 0.3s ease;
-        }
-        html:not(.dark) .modal-content { background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-        html.dark .modal-content { background: #1e1e1e; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #404040; }
+/* Animations */
+@keyframes slideInRight { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Badges */
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;}
-        .badge-pending { background: rgba(249,115,22,0.1); color: #ea580c; border: 1px solid rgba(249,115,22,0.2); }
-        .badge-approved { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-        html.dark .badge-pending { background: rgba(249,115,22,0.2); color: #fdba74; }
-        html.dark .badge-approved { background: rgba(16,185,129,0.2); color: #6ee7b7; }
-
-        /* Admin Booking Item */
-        .booking-item { border-radius: 12px; padding: 16px; transition: all 0.2s ease; margin-bottom: 16px; border-width: 1px;}
-        html:not(.dark) .booking-item { background: #ffffff; border-color: #e5e7eb; }
-        html.dark .booking-item { background: #2d2d2d; border-color: #404040; }
-        
-        .booking-item.status-pending { border-left: 4px solid #f97316; }
-        .booking-item.status-approved { border-left: 4px solid #10b981; }
-
-        /* Buttons */
-        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
-        .btn-approve { background: #10b981; color: white; }
-        .btn-approve:hover { background: #059669; }
-        .btn-approve:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
-        .btn-delete { background: #ef4444; color: white; }
-        .btn-delete:hover { background: #dc2626; }
-
-        /* Alert */
-        .alert { 
-            position: fixed; top: 20px; right: 20px; left: 20px;
-            padding: 16px 20px; border-radius: 12px; 
-            color: white; font-weight: 500;
-            z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; align-items: center; gap: 12px;
-        }
-        @media (min-width: 768px) { .alert { left: auto; min-width: 300px; max-width: 450px; } }
-        .alert.hidden { display: none; }
-        .alert.success { background: #10b981; }
-        .alert.error { background: #ef4444; }
-
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
-
-        /* Animations */
-        @keyframes slideInRight { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .chart-container { position: relative; height: 260px; width: 100%; }
+.chart-container { position: relative; height: 260px; width: 100%; }
