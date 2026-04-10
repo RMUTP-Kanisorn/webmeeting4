@@ -1,17 +1,40 @@
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec';
+       const API_URL = 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec';
 
         let bookings = JSON.parse(localStorage.getItem('cachedBookings')) || [];
         let currentDate = new Date();
         let currentSection = 'booking';
         let isAdminLoggedIn = false;
         
-        // ตัวแปรเก็บกราฟ Dashboard
         let chartStatusInstance = null;
         let chartRoomInstance = null;
 
+        // Theme Management
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+        let isDark = localStorage.getItem('theme') === 'dark';
+
+        function updateTheme() {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeToggleBtn.innerHTML = '<i data-lucide="sun" class="w-5 h-5"></i>';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeToggleBtn.innerHTML = '<i data-lucide="moon" class="w-5 h-5"></i>';
+                localStorage.setItem('theme', 'light');
+            }
+            if (window.lucide) lucide.createIcons();
+            if (isAdminLoggedIn) updateAdminStats(); // Re-render charts for new colors
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            isDark = !isDark;
+            updateTheme();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            updateTheme();
             generateTimeSlots();
-            
             loadBookingsForCalendar(new Date());
 
             const today = new Date().toISOString().split('T')[0];
@@ -23,18 +46,11 @@
             document.getElementById('bookingForm').addEventListener('submit', handleBookingSubmit);
             document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
 
-            document.addEventListener('input', e => {
-                if (e.target.id === 'searchBookings') filterBookings();
-            });
-            document.addEventListener('change', e => {
-                if (e.target.id === 'filterRoom' || e.target.id === 'filterStatus') filterBookings();
-            });
+            document.addEventListener('input', e => { if (e.target.id === 'searchBookings') filterBookings(); });
+            document.addEventListener('change', e => { if (e.target.id === 'filterRoom' || e.target.id === 'filterStatus') filterBookings(); });
         });
 
         async function apiPost(body = {}) {
-            if (!API_URL || API_URL === 'ใส่_WEB_APP_URL_จาก_GOOGLE_APPS_SCRIPT_ที่นี่') {
-                throw new Error('กรุณาตั้งค่า API_URL ในไฟล์ script.js ก่อนใช้งาน');
-            }
             const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -45,22 +61,14 @@
 
         function showSection(section) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            ['booking', 'calendar'].forEach(s => document.getElementById('nav-' + s)?.classList.remove('active'));
             
-            ['booking', 'calendar'].forEach(s => {
-                document.getElementById('nav-' + s)?.classList.remove('active');
-            });
-            
-            if (section !== 'manage') {
-                document.getElementById('nav-' + section)?.classList.add('active');
-            }
-            
+            if (section !== 'manage') document.getElementById('nav-' + section)?.classList.add('active');
             document.getElementById(section + '-section').classList.remove('hidden');
             currentSection = section;
 
             if (section === 'calendar') generateCalendar();
-            else if (section === 'manage') {
-                if (isAdminLoggedIn) loadBookingsList();
-            }
+            else if (section === 'manage' && isAdminLoggedIn) loadBookingsList();
         }
 
         function selectRoom(roomValue, cardEl) {
@@ -111,7 +119,6 @@
 
         async function handleBookingSubmit(e) {
             e.preventDefault();
-
             const room = document.getElementById('roomSelect').value;
             if (!room) {
                 document.getElementById('roomError').classList.remove('hidden');
@@ -120,40 +127,35 @@
             }
 
             showLoading();
-
             const equipment = Array.from(document.querySelectorAll('input[name="equipment"]:checked')).map(cb => cb.value);
             const drinks = Array.from(document.querySelectorAll('input[name="drinks"]:checked')).map(cb => cb.value);
 
             const data = {
-                date:         document.getElementById('bookingDate').value,
+                date: document.getElementById('bookingDate').value,
                 meeting_title: document.getElementById('meetingTitle').value,
-                room_id:      room,
-                start_time:   document.getElementById('startTime').value,
-                end_time:     document.getElementById('endTime').value,
-                booker:       document.getElementById('bookerName').value,
-                phone:        document.getElementById('phoneNumber').value,
-                email:        document.getElementById('emailAddress').value,
-                equipment:    equipment.join(', '),
-                drinks:       drinks.join(', '),
-                documents:    document.getElementById('documents').value,
-                status:       'pending'
+                room_id: room,
+                start_time: document.getElementById('startTime').value,
+                end_time: document.getElementById('endTime').value,
+                booker: document.getElementById('bookerName').value,
+                phone: document.getElementById('phoneNumber').value,
+                email: document.getElementById('emailAddress').value,
+                equipment: equipment.join(', '),
+                drinks: drinks.join(', '),
+                documents: document.getElementById('documents').value,
+                status: 'pending'
             };
 
             try {
                 const result = await apiPost({ action: 'saveBooking', data });
                 if (!result.ok) {
                     if (result.error && (result.error.includes('มีการจองแล้ว') || result.error.includes('ระบบกำลังยุ่ง'))) {
-                        const msgEl = document.getElementById('conflictMessage');
-                        msgEl.innerHTML = `${result.error}<br><br><span class="font-bold text-red-500">โปรดตรวจสอบเวลาหรือห้องใหม่อีกครั้ง</span>`;
-                        
-                        const conflictModal = document.getElementById('conflictModal');
-                        conflictModal.classList.remove('hidden');
-                        conflictModal.classList.add('flex');
+                        document.getElementById('conflictMessage').innerHTML = `${result.error}<br><br><span class="font-bold text-red-500">โปรดตรวจสอบเวลาหรือห้องใหม่อีกครั้ง</span>`;
+                        document.getElementById('conflictModal').classList.remove('hidden');
                     } else {
                         showAlert(result.error || 'การจองล้มเหลว', 'error');
                     }
                 } else {
-                    showAlert('✅ ส่งคำขอจองเรียบร้อยแล้ว! ข้อมูลถูกส่งไปที่ระบบแอดมิน (รอการอนุมัติ)', 'success');
+                    showAlert('ส่งคำขอจองเรียบร้อย! ข้อมูลถูกส่งไปที่ระบบ (รออนุมัติ)', 'success');
                     document.getElementById('bookingForm').reset();
                     document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
                     document.getElementById('roomSelect').value = '';
@@ -161,14 +163,11 @@
                     data.id = result.id;
                     bookings.push(data);
                     localStorage.setItem('cachedBookings', JSON.stringify(bookings));
-                    
                     if (currentSection === 'calendar') generateCalendar();
                 }
             } catch (err) {
-                showAlert('❌ ข้อมูลยังไม่ถูกส่ง: กรุณาเช็คการเชื่อมต่อ', 'error');
-                console.error(err);
+                showAlert('กรุณาเช็คการเชื่อมต่อ', 'error');
             }
-
             hideLoading();
         }
 
@@ -180,13 +179,10 @@
                 if (result.ok) {
                     bookings = result.data;
                     localStorage.setItem('cachedBookings', JSON.stringify(bookings));
-                    
                     if (currentSection === 'calendar') generateCalendar();
                     if (currentSection === 'booking') updateAvailableSlots();
                 }
-            } catch (err) {
-                console.error('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ อาศัยข้อมูลจาก Cache แทน:', err);
-            }
+            } catch (err) {}
         }
 
         function generateCalendar() {
@@ -194,12 +190,12 @@
             const monthEl = document.getElementById('currentMonth');
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const names = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-                           'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            const names = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
             monthEl.textContent = `${names[month]} ${year + 543}`;
             
             if (bookings.length === 0 && !localStorage.getItem('cachedBookings')) {
-                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">กำลังโหลดข้อมูล...</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-2"></i> กำลังโหลดข้อมูล...</div>';
+                lucide.createIcons();
             }
 
             setTimeout(() => {
@@ -209,7 +205,7 @@
 
                 for (let i = 0; i < firstDay; i++) {
                     const emp = document.createElement('div');
-                    emp.className = 'bg-gray-200/40 rounded min-h-[40px] md:min-h-[52px]';
+                    emp.className = 'empty-day rounded min-h-[50px]';
                     grid.appendChild(emp);
                 }
 
@@ -220,78 +216,60 @@
                     const hasApproved = dayBookings.some(b => b.status === 'approved');
 
                     const el = document.createElement('div');
-                    let colorClass = 'bg-white text-gray-700 hover:bg-blue-50';
+                    let colorClass = '';
                     if (hasPending && hasApproved) colorClass = 'day-mixed';
                     else if (hasApproved) colorClass = 'day-approved'; 
                     else if (hasPending) colorClass = 'day-pending'; 
 
-                    el.className = `calendar-day rounded shadow-sm flex flex-col items-center justify-center font-semibold transition-all p-1 text-sm md:text-base ${colorClass}`;
-                    el.innerHTML = `<span>${day}</span>${dayBookings.length > 0 ? `<span class="text-[9px] md:text-[10px] font-normal opacity-90">${dayBookings.length} คิวจอง</span>` : ''}`;
+                    el.className = `calendar-day flex flex-col items-center justify-center p-1 ${colorClass}`;
+                    el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length > 0 ? `<span class="text-[10px] opacity-90">${dayBookings.length} รายการ</span>` : ''}`;
 
-                    if (dayBookings.length > 0) {
-                        el.addEventListener('click', () => showBookingModal(dateStr, dayBookings));
-                    }
+                    if (dayBookings.length > 0) el.addEventListener('click', () => showBookingModal(dateStr, dayBookings));
                     grid.appendChild(el);
                 }
+                lucide.createIcons();
             }, 50);
         }
 
-        async function previousMonth() {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            generateCalendar(); 
-            await loadBookingsForCalendar(currentDate); 
-        }
-
-        async function nextMonth() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            generateCalendar(); 
-            await loadBookingsForCalendar(currentDate);
-        }
+        async function previousMonth() { currentDate.setMonth(currentDate.getMonth() - 1); generateCalendar(); await loadBookingsForCalendar(currentDate); }
+        async function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); generateCalendar(); await loadBookingsForCalendar(currentDate); }
 
         function showBookingModal(dateStr, dayBookings) {
             const modal = document.getElementById('bookingModal');
             const content = document.getElementById('modalContent');
-            const dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('th-TH', {
-                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-            });
+            const dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 
             content.innerHTML = `
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
-                    <p class="font-bold text-blue-800 text-sm md:text-base">📅 ${dateFormatted}</p>
-                    <p class="text-xs md:text-sm text-blue-600">มีการจองทั้งหมด ${dayBookings.length} รายการ</p>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 mb-4">
+                    <p class="font-bold text-blue-800 dark:text-blue-300">${dateFormatted}</p>
+                    <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">มีการจองทั้งหมด ${dayBookings.length} รายการ</p>
                 </div>
-                <div class="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div class="space-y-3 custom-scrollbar pr-1">
                     ${dayBookings.map((b, i) => `
-                        <div class="modal-booking-entry status-${b.status || 'pending'}">
-                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
-                                <span class="font-bold text-gray-800 text-sm md:text-base">รายการจองที่ ${i+1}</span>
-                                <span class="badge badge-${b.status === 'approved' ? 'approved' : 'pending'} self-start sm:self-auto">
-                                    ${b.status === 'approved' ? '✅ อนุมัติแล้ว' : '⏳ รออนุมัติจาก Admin'}
+                        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border-l-4 ${b.status === 'approved' ? 'border-green-500' : 'border-orange-500'}">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-sm">รายการที่ ${i+1}</span>
+                                <span class="badge ${b.status === 'approved' ? 'badge-approved' : 'badge-pending'}">
+                                    <i data-lucide="${b.status === 'approved' ? 'check-circle' : 'clock'}" class="w-3 h-3"></i> 
+                                    ${b.status === 'approved' ? 'อนุมัติแล้ว' : 'รออนุมัติ'}
                                 </span>
                             </div>
-                            <div class="modal-row"><span class="modal-label">📌 หัวข้อ:</span><span class="modal-value">${b.meeting_title || '-'}</span></div>
-                            <div class="modal-row"><span class="modal-label">🏠 ห้อง:</span><span class="modal-value">${b.room_id}</span></div>
-                            <div class="modal-row"><span class="modal-label">⏰ เวลา:</span><span class="modal-value">${b.start_time} – ${b.end_time} น.</span></div>
-                            <div class="modal-row"><span class="modal-label">👤 ผู้จอง:</span><span class="modal-value">${b.booker}</span></div>
-                            <div class="modal-row"><span class="modal-label">🖥️ อุปกรณ์:</span><span class="modal-value">${b.equipment || 'ไม่ระบุ'}</span></div>
+                            <div class="grid grid-cols-1 gap-2 text-sm">
+                                <div class="flex"><span class="text-gray-500 w-20">หัวข้อ:</span> <span class="font-medium">${b.meeting_title || '-'}</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20">ห้อง:</span> <span class="font-medium">${b.room_id}</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20">เวลา:</span> <span class="font-medium">${b.start_time} - ${b.end_time} น.</span></div>
+                                <div class="flex"><span class="text-gray-500 w-20">ผู้จอง:</span> <span class="font-medium">${b.booker}</span></div>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
             `;
-
             modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            lucide.createIcons();
         }
 
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if(modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
+        function closeModal(modalId) { document.getElementById(modalId)?.classList.add('hidden'); }
 
-        // ระบบ Login ฝั่ง Client อัปเดตใหม่ (ส่งไปให้ Backend เช็ค)
         async function handleAdminLogin(e) {
             e.preventDefault();
             const user = document.getElementById('adminUser').value.trim();
@@ -299,13 +277,12 @@
             const errEl = document.getElementById('loginError');
             const btn = document.getElementById('adminLoginBtn');
             
-            btn.innerHTML = "กำลังตรวจสอบ...";
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังตรวจสอบ...';
             btn.disabled = true;
+            lucide.createIcons();
 
             try {
-                // ส่งค่าไปเช็คฝั่ง Google Apps Script
                 const result = await apiPost({ action: 'adminLogin', data: { user, pass } });
-                
                 if (result.ok) {
                     isAdminLoggedIn = true;
                     errEl.classList.add('hidden');
@@ -314,15 +291,15 @@
                     loadBookingsList(); 
                 } else {
                     errEl.classList.remove('hidden');
-                    errEl.textContent = "⚠️ " + result.error;
                     document.getElementById('adminPass').value = '';
                 }
             } catch(e) {
                 errEl.classList.remove('hidden');
-                errEl.textContent = "⚠️ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
+                errEl.innerHTML = '<i data-lucide="wifi-off" class="w-4 h-4"></i> ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
             } finally {
-                btn.innerHTML = "เข้าสู่ระบบ";
+                btn.innerHTML = 'เข้าสู่ระบบ';
                 btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
@@ -330,7 +307,6 @@
             isAdminLoggedIn = false;
             document.getElementById('admin-login-box').classList.remove('hidden');
             document.getElementById('admin-panel').classList.add('hidden');
-            document.getElementById('adminUser').value = '';
             document.getElementById('adminPass').value = '';
             showSection('booking'); 
         }
@@ -338,78 +314,63 @@
         async function loadBookingsList() {
             updateAdminStats();
             renderBookingsList(bookings);
-            
             await loadBookingsForCalendar(currentDate);
             updateAdminStats();
             renderBookingsList(bookings);
         }
 
-        // เพิ่มการเรนเดอร์กราฟ (ข้อ 3) ในฟังก์ชันอัปเดตสถิติ
         function updateAdminStats() {
             const pending  = bookings.filter(b => b.status !== 'approved').length;
             const approved = bookings.filter(b => b.status === 'approved').length;
             document.getElementById('statPending').textContent  = pending;
             document.getElementById('statApproved').textContent = approved;
             document.getElementById('statTotal').textContent    = bookings.length;
-
             renderDashboardCharts(pending, approved);
         }
 
-        // 📊 ฟังก์ชันวาดกราฟ Dashboard
+        function getChartColors() {
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const gridColor = isDark ? '#404040' : '#f3f4f6';
+            return { textColor, gridColor };
+        }
+
         function renderDashboardCharts(pending, approved) {
             if(!document.getElementById('statusChart')) return;
+            const { textColor, gridColor } = getChartColors();
 
-            // 1. กราฟโดนัท สถานะ
+            // Doughnut
             const ctxStatus = document.getElementById('statusChart').getContext('2d');
             if(chartStatusInstance) chartStatusInstance.destroy();
-            
             chartStatusInstance = new Chart(ctxStatus, {
                 type: 'doughnut',
                 data: {
                     labels: ['รออนุมัติ', 'อนุมัติแล้ว'],
-                    datasets: [{
-                        data: [pending, approved],
-                        backgroundColor: ['#f97316', '#22c55e'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
+                    datasets: [{ data: [pending, approved], backgroundColor: ['#f97316', '#10b981'], borderWidth: 0, hoverOffset: 4 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Maledpan' } } } } 
+                }
             });
 
-            // 2. กราฟแท่ง สถิติการใช้ห้อง
+            // Bar
             const roomCounts = { 'ห้องประชุม 1 (รองรับ 13 คน)': 0, 'ห้องประชุม 2 (รองรับ 30 คน)': 0, 'ห้องประชุม 3 (รองรับ 100 คน)': 0 };
-            bookings.forEach(b => {
-                if(roomCounts[b.room_id] !== undefined) roomCounts[b.room_id]++;
-                else roomCounts[b.room_id] = 1; 
-            });
-
-            const roomLabels = ['ห้อง 1', 'ห้อง 2', 'ห้อง 3'];
-            const roomData = [
-                roomCounts['ห้องประชุม 1 (รองรับ 13 คน)'], 
-                roomCounts['ห้องประชุม 2 (รองรับ 30 คน)'], 
-                roomCounts['ห้องประชุม 3 (รองรับ 100 คน)']
-            ];
-
+            bookings.forEach(b => { if(roomCounts[b.room_id] !== undefined) roomCounts[b.room_id]++; else roomCounts[b.room_id] = 1; });
             const ctxRoom = document.getElementById('roomChart').getContext('2d');
             if(chartRoomInstance) chartRoomInstance.destroy();
-
             chartRoomInstance = new Chart(ctxRoom, {
                 type: 'bar',
                 data: {
-                    labels: roomLabels,
-                    datasets: [{
-                        label: 'จำนวนครั้งที่ถูกจอง',
-                        data: roomData,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 6
-                    }]
+                    labels: ['ห้อง 1', 'ห้อง 2', 'ห้อง 3'],
+                    datasets: [{ label: 'จำนวนครั้ง', data: [roomCounts['ห้องประชุม 1 (รองรับ 13 คน)'], roomCounts['ห้องประชุม 2 (รองรับ 30 คน)'], roomCounts['ห้องประชุม 3 (รองรับ 100 คน)']], backgroundColor: '#3b82f6', borderRadius: 4 }]
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-                    plugins: { legend: { display: false } }
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: textColor }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'Maledpan' }, bodyFont: { family: 'Maledpan' } } }
                 }
             });
         }
@@ -419,87 +380,67 @@
             const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date) || a.start_time.localeCompare(b.start_time));
 
             if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-500 py-10 bg-gray-50 rounded-xl">ไม่มีข้อมูลการจองในระบบ</p>';
+                container.innerHTML = '<div class="text-center text-gray-500 py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i> ไม่มีข้อมูลการจอง</div>';
+                lucide.createIcons();
                 return;
             }
 
-            container.innerHTML = sorted.map(b => adminBookingCard(b)).join('');
-        }
-
-        function adminBookingCard(b) {
-            const isPending  = b.status !== 'approved';
-            const statusBadge = isPending
-                ? '<span class="badge badge-pending">⏳ รออนุมัติ (Pending)</span>'
-                : '<span class="badge badge-approved">✅ อนุมัติแล้ว (Approved)</span>';
-
-            let dateDisplay = b.date;
-            try { if(b.date) dateDisplay = formatDate(b.date); } catch(e) {}
-
-            return `
-                <div class="booking-item status-${isPending ? 'pending' : 'approved'}" id="card-${b.id}">
-                    <div class="booking-header">
-                        <div class="w-full sm:w-auto">
-                            <div class="booking-date-time text-sm md:text-base">📅 ${dateDisplay} | ⏰ ${b.start_time} – ${b.end_time} น.</div>
-                            <div class="font-semibold text-gray-800 mt-1">${b.room_id}</div>
-                            ${b.meeting_title ? `<div class="text-xs md:text-sm text-gray-500">📌 ${b.meeting_title}</div>` : ''}
+            container.innerHTML = sorted.map(b => {
+                const isPending = b.status !== 'approved';
+                return `
+                    <div class="booking-item status-${isPending ? 'pending' : 'approved'}">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="font-bold text-lg">${b.room_id}</div>
+                                <div class="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i> ${formatDate(b.date)} 
+                                    <i data-lucide="clock" class="w-3 h-3 ml-2"></i> ${b.start_time} - ${b.end_time} น.
+                                </div>
+                                ${b.meeting_title ? `<div class="text-sm mt-2"><span class="text-gray-500">หัวข้อ:</span> <span class="font-medium">${b.meeting_title}</span></div>` : ''}
+                            </div>
+                            <span class="badge ${isPending ? 'badge-pending' : 'badge-approved'}">
+                                <i data-lucide="${isPending ? 'clock' : 'check-circle'}" class="w-3 h-3"></i> ${isPending ? 'รออนุมัติ' : 'อนุมัติแล้ว'}
+                            </span>
                         </div>
-                        <div class="mt-2 sm:mt-0">${statusBadge}</div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs md:text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg border">
-                        <div>👤 <strong class="text-gray-700">ผู้จอง:</strong> ${b.booker}</div>
-                        <div>📞 <strong class="text-gray-700">เบอร์โทร:</strong> ${b.phone}</div>
-                        <div>📧 <strong class="text-gray-700">อีเมล:</strong> ${b.email || '-'}</div>
-                        ${b.equipment ? `<div>🖥️ <strong class="text-gray-700">อุปกรณ์:</strong> ${b.equipment}</div>` : ''}
-                        ${b.drinks    ? `<div>🥤 <strong class="text-gray-700">เครื่องดื่ม:</strong> ${b.drinks}</div>` : ''}
-                        ${b.documents ? `<div class="sm:col-span-2 mt-1">📝 <strong class="text-gray-700">หมายเหตุ:</strong> ${b.documents}</div>` : ''}
-                    </div>
-
-                    <div class="booking-actions flex flex-col sm:flex-row w-full gap-2">
-                        ${isPending ? `
-                            <button class="btn-approve flex-1 py-2 md:py-3 text-sm md:text-base" onclick="approveBooking('${b.id}', '${b.email}', '${b.booker}', '${b.date}', '${b.start_time}', '${b.end_time}', '${b.room_id}', '${b.meeting_title}')">
-                                ✅ กดอนุมัติห้อง และส่งอีเมล (บันทึกปฏิทิน)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl mb-4 border border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-gray-400"></i> ${b.booker}</div>
+                            <div class="flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4 text-gray-400"></i> ${b.phone}</div>
+                            <div class="flex items-center gap-2 sm:col-span-2"><i data-lucide="mail" class="w-4 h-4 text-gray-400"></i> ${b.email || '-'}</div>
+                            ${b.equipment ? `<div class="flex items-start gap-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.equipment}</span></div>` : ''}
+                            ${b.drinks ? `<div class="flex items-start gap-2"><i data-lucide="coffee" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.drinks}</span></div>` : ''}
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            ${isPending ? `
+                                <button class="btn-action btn-approve flex-1 py-2.5" onclick="approveBooking('${b.id}', '${b.email}', '${b.booker}', '${b.date}', '${b.start_time}', '${b.end_time}', '${b.room_id}', '${b.meeting_title}')">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i> อนุมัติการจอง
+                                </button>
+                            ` : `
+                                <button class="btn-action flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed" disabled>
+                                    <i data-lucide="check" class="w-4 h-4"></i> อนุมัติแล้ว
+                                </button>
+                            `}
+                            <button class="btn-action btn-delete w-full sm:w-auto px-5 py-2.5" onclick="confirmDeleteBooking('${b.id}')">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> ลบ
                             </button>
-                        ` : `
-                            <button class="btn-approve flex-1 py-2 md:py-3 text-sm md:text-base" disabled style="opacity:0.6">✅ อนุมัติเรียบร้อยแล้ว</button>
-                        `}
-                        <button class="btn-delete w-full sm:w-auto py-2 md:py-3 px-4 text-sm md:text-base" onclick="confirmDeleteBooking('${b.id}')">🗑️ ลบข้อมูล</button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }).join('');
+            lucide.createIcons();
         }
 
         async function approveBooking(id, email, booker, date, startTime, endTime, room, title) {
-            if (!confirm(`ยืนยันการอนุมัติห้องประชุม\nระบบจะส่งอีเมลไปยัง ${email} และลงปฏิทิน?`)) return;
-
+            if (!confirm(`ยืนยันการอนุมัติห้องประชุม\nระบบจะส่งอีเมลไปยัง ${email} และลงปฏิทิน`)) return;
             try {
-                const result = await apiPost({
-                    action: 'approveBooking',
-                    id, email, booker, date, startTime, endTime, room, meeting_title: title
-                });
-
+                const result = await apiPost({ action: 'approveBooking', id, email, booker, date, startTime, endTime, room, meeting_title: title });
                 if (result.ok) {
-                    if(result.notice) {
-                         showAlert(`✅ อนุมัติสำเร็จ! ${result.notice}`, 'success');
-                    } else {
-                         showAlert(`✅ อนุมัติเรียบร้อย! ส่งอีเมล และลง Calendar แล้ว`, 'success');
-                    }
-                   
+                    showAlert('อนุมัติเรียบร้อย! ส่งอีเมล และลง Calendar แล้ว', 'success');
                     const b = bookings.find(b => b.id === id);
                     if (b) b.status = 'approved';
-                    
                     localStorage.setItem('cachedBookings', JSON.stringify(bookings));
-                    
-                    updateAdminStats();
-                    renderBookingsList(bookings);
-
-                } else {
-                    showAlert(result.error || 'เกิดข้อผิดพลาดในการอนุมัติ', 'error');
-                }
-            } catch (err) {
-                showAlert('❌ ไม่สามารถเชื่อมต่อกับ Google Sheet ได้', 'error');
-                console.error(err);
-            }
+                    updateAdminStats(); renderBookingsList(bookings);
+                } else { showAlert(result.error || 'เกิดข้อผิดพลาดในการอนุมัติ', 'error'); }
+            } catch (err) { showAlert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์', 'error'); }
         }
 
         async function confirmDeleteBooking(id) {
@@ -507,26 +448,18 @@
             try {
                 const result = await apiPost({ action: 'deleteBooking', id });
                 if (result.ok) {
-                    showAlert('🗑️ ลบการจองเรียบร้อย', 'success');
-                    
+                    showAlert('ลบการจองเรียบร้อย', 'success');
                     bookings = bookings.filter(b => b.id !== id);
                     localStorage.setItem('cachedBookings', JSON.stringify(bookings));
-                    
-                    updateAdminStats();
-                    renderBookingsList(bookings);
-                } else {
-                    showAlert(result.error || 'ลบไม่สำเร็จ', 'error');
-                }
-            } catch (err) {
-                showAlert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
-            }
+                    updateAdminStats(); renderBookingsList(bookings);
+                } else { showAlert(result.error || 'ลบไม่สำเร็จ', 'error'); }
+            } catch (err) { showAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error'); }
         }
 
         function filterBookings() {
             const search = document.getElementById('searchBookings')?.value.toLowerCase() || '';
             const room   = document.getElementById('filterRoom')?.value || '';
             const status = document.getElementById('filterStatus')?.value || '';
-
             const filtered = bookings.filter(b => {
                 const matchSearch = b.booker.toLowerCase().includes(search) || b.phone.includes(search) || (b.email || '').toLowerCase().includes(search);
                 const matchRoom   = !room   || b.room_id === room;
@@ -538,30 +471,30 @@
 
         function formatDate(dateString) {
             if (!dateString) return '';
-            try {
-                return new Date(dateString + 'T00:00:00').toLocaleDateString('th-TH', {
-                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-                });
-            } catch(e) { return dateString; }
+            try { return new Date(dateString + 'T00:00:00').toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }); } catch(e) { return dateString; }
         }
 
         function showAlert(message, type = 'success') {
             const el = document.getElementById('alert');
+            const icon = document.getElementById('alertIcon');
+            icon.innerHTML = type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
             document.getElementById('alertMessage').textContent = message;
             el.className = `alert ${type}`;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 6000);
+            lucide.createIcons();
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
         function showLoading() {
             const btn = document.getElementById('submitBtn');
             btn.dataset.orig = btn.innerHTML;
-            btn.innerHTML = '⏳ ระบบกำลังประมวลผล...';
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ระบบกำลังประมวลผล...';
             btn.disabled = true;
+            lucide.createIcons();
         }
 
         function hideLoading() {
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = btn.dataset.orig || '📨 ส่งคำขอจองห้องประชุม';
+            btn.innerHTML = btn.dataset.orig;
             btn.disabled = false;
         }
