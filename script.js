@@ -1,5 +1,5 @@
-// เปลี่ยน URL นี้เป็น Web App URL จาก Google Apps Script
-const API_URL = '[https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec](https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec)';
+// เปลี่ยน URL นี้เป็น Web App URL จาก Google Apps Script ของคุณ
+const API_URL = 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec';
 
 let bookings = JSON.parse(localStorage.getItem('cachedBookings')) || [];
 let currentDate = new Date();
@@ -17,7 +17,7 @@ let isDark = localStorage.getItem('theme') === 'dark';
 function updateTheme() {
     if (isDark) {
         htmlElement.classList.add('dark');
-        document.body.classList.add('dark'); // เพิ่มเพื่อให้ Body สลับสีได้อย่างถูกต้อง
+        document.body.classList.add('dark');
         themeToggleBtn.innerHTML = '<i data-lucide="sun" class="w-5 h-5"></i>';
         localStorage.setItem('theme', 'dark');
     } else {
@@ -26,7 +26,8 @@ function updateTheme() {
         themeToggleBtn.innerHTML = '<i data-lucide="moon" class="w-5 h-5"></i>';
         localStorage.setItem('theme', 'light');
     }
-    if (window.lucide) lucide.createIcons();
+    // ดักจับ error กรณีที่ lucide โหลดไม่ขึ้นจะได้ไม่ทำให้สคริปต์หยุดทำงาน
+    try { if (window.lucide) lucide.createIcons(); } catch(e){}
     if (isAdminLoggedIn) updateAdminStats();
 }
 
@@ -199,7 +200,7 @@ function generateCalendar() {
     
     if (bookings.length === 0 && !localStorage.getItem('cachedBookings')) {
         grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-2"></i> กำลังโหลดข้อมูล...</div>';
-        lucide.createIcons();
+        try { lucide.createIcons(); } catch(e){}
     }
 
     setTimeout(() => {
@@ -223,7 +224,7 @@ function generateCalendar() {
             const el = document.createElement('div');
             let customClass = '';
             
-            // แก้ไขปัญหาช่องปฏิทินในโหมดสว่าง-มืด อย่างสมบูรณ์ 
+            // สีช่องปฏิทิน
             if (hasPending && hasApproved) {
                 customClass = 'day-mixed text-white border-none';
             } else if (hasApproved) {
@@ -231,13 +232,11 @@ function generateCalendar() {
             } else if (hasPending) {
                 customClass = 'day-pending text-white border-none'; 
             } else {
-                // สีพื้นหลังช่องวันที่ธรรมดาตามโหมด
                 customClass = 'bg-white dark:bg-[#2d2d2d] border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500';
             }
 
             el.className = `calendar-day flex flex-col items-center justify-center p-1 rounded min-h-[50px] transition-all cursor-pointer ${customClass}`;
             
-            // ยกเลิก cursor-pointer ถ้าไม่มีการจอง
             if(dayBookings.length === 0) el.classList.remove('cursor-pointer');
 
             el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length > 0 ? `<span class="text-[10px] opacity-90">${dayBookings.length} รายการ</span>` : ''}`;
@@ -245,7 +244,7 @@ function generateCalendar() {
             if (dayBookings.length > 0) el.addEventListener('click', () => showBookingModal(dateStr, dayBookings));
             grid.appendChild(el);
         }
-        lucide.createIcons();
+        try { lucide.createIcons(); } catch(e){}
     }, 50);
 }
 
@@ -283,7 +282,7 @@ function showBookingModal(dateStr, dayBookings) {
         </div>
     `;
     modal.classList.remove('hidden');
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch(e){}
 }
 
 function closeModal(modalId) { document.getElementById(modalId)?.classList.add('hidden'); }
@@ -297,7 +296,7 @@ async function handleAdminLogin(e) {
     
     btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังตรวจสอบ...';
     btn.disabled = true;
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch(e){}
 
     try {
         const result = await apiPost({ action: 'adminLogin', data: { user, pass } });
@@ -317,7 +316,7 @@ async function handleAdminLogin(e) {
     } finally {
         btn.innerHTML = 'เข้าสู่ระบบ';
         btn.disabled = false;
-        lucide.createIcons();
+        try { lucide.createIcons(); } catch(e){}
     }
 }
 
@@ -401,7 +400,7 @@ function renderBookingsList(list) {
 
     if (sorted.length === 0) {
         container.innerHTML = '<div class="text-center text-gray-500 py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i> ไม่มีข้อมูลการจอง</div>';
-        lucide.createIcons();
+        try { lucide.createIcons(); } catch(e){}
         return;
     }
 
@@ -455,7 +454,7 @@ function renderBookingsList(list) {
             </div>
         `;
     }).join('');
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch(e){}
 }
 
 async function approveBooking(id, email, booker, date, startTime, endTime, room, title) {
@@ -524,7 +523,7 @@ function showAlert(message, type = 'success') {
     document.getElementById('alertMessage').textContent = message;
     el.className = `alert ${type}`;
     el.classList.remove('hidden');
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch(e){}
     setTimeout(() => el.classList.add('hidden'), 5000);
 }
 
@@ -533,7 +532,7 @@ function showLoading() {
     btn.dataset.orig = btn.innerHTML;
     btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ระบบกำลังประมวลผล...';
     btn.disabled = true;
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch(e){}
 }
 
 function hideLoading() {

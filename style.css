@@ -1,3 +1,7 @@
+/* Fallback ในกรณีที่ Tailwind โหลดไม่ขึ้น จะได้สีไม่เพี้ยนมากเกินไป */
+html.dark body { background-color: #121212 !important; color: #e5e7eb !important; }
+html.dark .room-card { color: #e5e7eb !important; }
+
 * { font-family: 'Kanit', sans-serif; } 
 
 body {
@@ -16,6 +20,8 @@ body {
     padding: 8px 16px; 
     border-radius: 9999px; 
     transition: all 0.2s ease; 
+    border: none;
+    cursor: pointer;
 }
 @media (min-width: 768px) { .nav-btn { padding: 10px 24px; } }
 
