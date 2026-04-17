@@ -4,38 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบช่วยการประชุมออนไลน์</title>
-    
-    <!-- โหลดฟอนต์ Kanit -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- เชื่อมโยงไฟล์ CSS หลัก -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- โหลด Tailwind CSS (ตัวช่วยจัด Layout) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
-    
-    <!-- โหลด Chart.js และ Icon -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 transition-colors duration-300 dark:bg-[#121212] dark:text-gray-200">
+<body class="bg-gray-50 text-gray-800 dark:bg-[#121212] dark:text-gray-200 transition-colors duration-300">
  
     <!-- HEADER -->
     <header class="sticky top-0 z-50 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
         <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
             
+            <!-- Logo / Title แก้ไขชื่อและเอาไอคอนออก -->
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                    <i data-lucide="monitor-speaker" class="w-6 h-6"></i>
-                </div>
-                <h1 class="text-xl md:text-2xl font-bold tracking-wide">Meeting Booking</h1>
+                <h1 class="text-xl md:text-xl font-bold tracking-wide">ระบบช่วยการประชุมออนไลน์ <span class="hidden sm:inline text-sm font-normal text-gray-500 dark:text-gray-400">(Online Meeting Assistant System)</span></h1>
             </div>
 
+            <!-- Navigation -->
             <nav class="flex justify-center flex-wrap gap-2">
                 <button onclick="showSection('booking')" class="nav-btn active" id="nav-booking">
                     <i data-lucide="edit-3" class="w-4 h-4"></i> จองห้อง
@@ -45,11 +31,12 @@
                 </button>
             </nav>
 
+            <!-- Actions (Theme Toggle & Admin) -->
             <div class="flex items-center gap-3 absolute md:static right-4 top-4">
                 <button id="themeToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                     <i data-lucide="moon" class="w-5 h-5"></i>
                 </button>
-                <button onclick="showSection('manage')" class="p-2 md:px-4 md:py-2 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 font-medium transition flex items-center gap-2" id="nav-manage">
+                <button onclick="showSection('manage')" class="p-2 md:px-4 md:py-2 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 font-medium transition flex items-center gap-2" id="nav-manage">
                     <i data-lucide="settings" class="w-4 h-4"></i> <span class="hidden md:inline">ผู้ดูแลระบบ</span>
                 </button>
             </div>
@@ -67,6 +54,7 @@
                 </div>
                 
                 <form id="bookingForm" class="space-y-8">
+                    <!-- วันที่ + หัวข้อ -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i> วันที่ต้องการจอง <span class="text-red-500">*</span></label>
@@ -78,6 +66,7 @@
                         </div>
                     </div>
  
+                    <!-- เลือกห้องประชุม -->
                     <div class="space-y-3">
                         <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-500"></i> เลือกห้องประชุม <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="roomCards">
@@ -118,6 +107,7 @@
                         <p id="roomError" class="text-red-500 text-sm hidden flex items-center gap-1"><i data-lucide="alert-circle" class="w-4 h-4"></i> กรุณาเลือกห้องประชุม</p>
                     </div>
  
+                    <!-- เวลา -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="clock" class="w-4 h-4 text-gray-500"></i> เวลาเริ่มต้น <span class="text-red-500">*</span></label>
@@ -133,6 +123,7 @@
                         </div>
                     </div>
  
+                    <!-- ข้อมูลผู้จอง -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="user" class="w-4 h-4 text-gray-500"></i> ชื่อผู้จอง <span class="text-red-500">*</span></label>
@@ -144,12 +135,14 @@
                         </div>
                     </div>
  
+                    <!-- อีเมล -->
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="mail" class="w-4 h-4 text-gray-500"></i> อีเมลสำหรับรับการยืนยัน <span class="text-red-500">*</span></label>
                         <input type="email" id="emailAddress" class="form-input" placeholder="example@email.com" required>
                         <p class="text-xs text-blue-500 dark:text-blue-400 font-medium mt-1 flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> ระบบจะส่งอีเมลแจ้งเตือนเมื่อได้รับการอนุมัติ</p>
                     </div>
  
+                    <!-- อุปกรณ์ -->
                     <div class="space-y-3">
                         <label class="text-sm font-semibold">อุปกรณ์ที่ต้องการใช้งาน</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -184,6 +177,7 @@
                         </div>
                     </div>
  
+                    <!-- เครื่องดื่ม -->
                     <div class="space-y-3">
                         <label class="text-sm font-semibold">เครื่องดื่มที่ต้องการ</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -204,6 +198,7 @@
                         </div>
                     </div>
  
+                    <!-- หมายเหตุ -->
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="clipboard-list" class="w-4 h-4 text-gray-500"></i> หมายเหตุเพิ่มเติม</label>
                         <textarea id="documents" class="form-input h-24 resize-none" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
@@ -238,12 +233,12 @@
  
                 <div class="grid grid-cols-7 gap-2 mb-2">
                     <div class="text-center font-semibold text-red-500 text-sm">อา</div>
-                    <div class="text-center font-semibold text-yellow-500 text-sm">จ</div>
-                    <div class="text-center font-semibold text-pink-500 text-sm">อ</div>
-                    <div class="text-center font-semibold text-green-500 text-sm">พ</div>
-                    <div class="text-center font-semibold text-orange-500 text-sm">พฤ</div>
-                    <div class="text-center font-semibold text-blue-500 text-sm">ศ</div>
-                    <div class="text-center font-semibold text-purple-500 text-sm">ส</div>
+                    <div class="text-center font-semibold text-gray-500 dark:text-gray-400 text-sm">จ</div>
+                    <div class="text-center font-semibold text-gray-500 dark:text-gray-400 text-sm">อ</div>
+                    <div class="text-center font-semibold text-gray-500 dark:text-gray-400 text-sm">พ</div>
+                    <div class="text-center font-semibold text-gray-500 dark:text-gray-400 text-sm">พฤ</div>
+                    <div class="text-center font-semibold text-gray-500 dark:text-gray-400 text-sm">ศ</div>
+                    <div class="text-center font-semibold text-blue-500 text-sm">ส</div>
                 </div>
                 <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
             </div>
@@ -270,7 +265,9 @@
                         <input type="password" id="adminPass" class="form-input" placeholder="••••••••" autocomplete="current-password">
                     </div>
                     <p id="loginError" class="text-red-500 text-sm hidden flex items-center gap-1"><i data-lucide="alert-circle" class="w-4 h-4"></i> ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
-                    <button type="submit" id="adminLoginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition shadow-md">
+                    
+                    <!-- แก้ไข 2: เพิ่ม flex items-center justify-center gap-2 ให้ปุ่มตรงกลางและสวยงาม -->
+                    <button type="submit" id="adminLoginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center justify-center gap-2">
                         เข้าสู่ระบบ
                     </button>
                 </form>
@@ -290,7 +287,7 @@
                         </button>
                     </div>
                     
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <div class="bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-xl p-4 text-center">
                             <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" id="statPending">0</div>
                             <div class="text-sm font-medium text-orange-700 dark:text-orange-300 mt-1">รออนุมัติ</div>
@@ -299,11 +296,7 @@
                             <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="statApproved">0</div>
                             <div class="text-sm font-medium text-green-700 dark:text-green-300 mt-1">อนุมัติแล้ว</div>
                         </div>
-                        <div class="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl p-4 text-center">
-                            <div class="text-2xl font-bold text-red-600 dark:text-red-400" id="statRejected">0</div>
-                            <div class="text-sm font-medium text-red-700 dark:text-red-300 mt-1">ไม่อนุมัติ</div>
-                        </div>
-                        <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl p-4 text-center">
+                        <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl p-4 text-center col-span-2 sm:col-span-1">
                             <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="statTotal">0</div>
                             <div class="text-sm font-medium text-blue-700 dark:text-blue-300 mt-1">ทั้งหมด</div>
                         </div>
@@ -340,7 +333,6 @@
                                 <option value="">ทุกสถานะ</option>
                                 <option value="pending">รออนุมัติ</option>
                                 <option value="approved">อนุมัติแล้ว</option>
-                                <option value="rejected">ไม่อนุมัติ</option>
                             </select>
                         </div>
                     </div>
@@ -368,7 +360,7 @@
             </div>
             <h3 class="text-xl font-bold mb-2">ไม่สามารถจองได้</h3>
             <p id="conflictMessage" class="text-gray-500 dark:text-gray-400 mb-6 text-sm">ห้องประชุมนี้มีการจองแล้วในช่วงเวลาดังกล่าว โปรดตรวจสอบอีกครั้ง</p>
-            <button onclick="closeModal('conflictModal')" class="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold py-3 px-6 rounded-xl transition hover:opacity-90">
+            <button onclick="closeModal('conflictModal')" class="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3 px-6 rounded-xl transition hover:opacity-90">
                 รับทราบ
             </button>
         </div>
@@ -380,7 +372,6 @@
         <div id="alertMessage" class="flex-1"></div>
     </div>
  
-    <!-- เชื่อมโยงไฟล์ JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
