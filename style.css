@@ -159,3 +159,26 @@
         @media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+                /* --- แก้ไข UI Layout --- */
+        /* 1. บังคับช่องวันที่ให้มีกรอบและขนาดเท่าช่องข้อความปกติ (แก้บั๊กมือถือ/iOS) */
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db !important; /* สีกรอบมาตรฐาน */
+            border-radius: 0.5rem;
+            min-height: 48px;
+            padding: 0.75rem;
+            width: 100%;
+        }
+
+        /* 2. จัดปุ่มเฟือง Admin และโลโก้ให้อยู่กึ่งกลางแนวตั้ง ไม่ลอยทะลุกรอบ */
+        header > div {
+            display: flex !important;
+            align-items: center !important;
+            min-height: 64px; /* กำหนดความสูงตายตัวให้ header */
+        }
+        header button {
+            margin-top: 0 !important; /* ลบระยะขอบส่วนเกินที่ดันปุ่มขึ้นไป */
+        }

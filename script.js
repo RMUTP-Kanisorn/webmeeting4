@@ -1,5 +1,5 @@
         const CONFIG = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbzlhWrPbOiKJ9tymhIuqS_dCW6YHO6ZEAruLJajeRRg4xBS_XKKvsc_KoTn90I5YsPbJA/exec',
+            API_URL: 'https://script.google.com/macros/s/AKfycbwbQaMn-yX4wA_cq9CqeZSX2e5MYN51NYE7NGvFhhpfIx-Icx6p1PrQDhQS5Sz2OYfiXQ/exec',
             STATUS: {
                 PENDING: 'pending',
                 APPROVED: 'approved',
@@ -386,7 +386,6 @@
 
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                    // ระบบจะดึงการจองทั้งหมดของวันนี้ (รวมอดีต) มาแสดง
                     const dayBookings = state.getBookingsByDate(dateStr);
                     
                     const hasPending = dayBookings.some(b => b.status === CONFIG.STATUS.PENDING);
@@ -397,18 +396,13 @@
                     else if (hasApproved) bgClass = 'day-approved';
                     else if (hasPending) bgClass = 'day-pending';
 
-                    // UX Logic: เช็คว่าเป็นข้อมูลในอดีตหรือไม่
-                    const isPast = dateStr < todayStr;
-                    // ถ้าเป็นอดีต ให้ลดความสว่างลง (Opacity) และเฟดสีลง เพื่อให้ผู้ใช้แยกแยะได้ง่าย
-                    const pastStyleClass = isPast ? 'opacity-60 grayscale-[40%]' : '';
-
+                    // นำเอฟเฟกต์สีจางออก ใช้คลาสปกติ
                     const el = document.createElement('div');
-                    el.className = `calendar-day flex flex-col items-center justify-center p-1 rounded min-h-[50px] transition-all ${bgClass} ${pastStyleClass} ${dayBookings.length ? 'cursor-pointer hover:shadow-md hover:opacity-100' : ''}`;
+                    el.className = `calendar-day flex flex-col items-center justify-center p-1 rounded min-h-[50px] transition-all ${bgClass} ${dayBookings.length ? 'cursor-pointer hover:shadow-md' : ''}`;
                     
-                    // แทรกจำนวนรายการ
-                    el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length ? `<span class="text-[10px] ${isPast ? 'text-gray-800 font-medium' : 'opacity-90'}">${dayBookings.length} รายการ</span>` : ''}`;
+                    // แสดงข้อความและสีแบบดั้งเดิม
+                    el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length ? `<span class="text-[10px] text-white opacity-90">${dayBookings.length} รายการ</span>` : ''}`;
                     
-                    // ผู้ใช้งานทั่วไปกดดูประวัติย้อนหลังได้ตลอดเวลา
                     if (dayBookings.length > 0) {
                         el.addEventListener('click', () => this.showModal(dateStr, dayBookings));
                     }
