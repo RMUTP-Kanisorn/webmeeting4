@@ -121,6 +121,40 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .chart-container { position: relative; height: 260px; width: 100%; }
 
+        /* --- Mobile UI / UX Optimization --- */
+        @media (max-width: 640px) {
+            /* ปรับ Modal ให้เป็น Bottom Sheet บนมือถือเพื่อให้กดง่ายขึ้นด้วยมือเดียว */
+            .modal { 
+                align-items: flex-end; 
+                padding: 0; 
+            }
+            .modal-content { 
+                border-radius: 24px 24px 0 0; 
+                padding: 24px 20px 40px; 
+                max-height: 85vh; 
+                animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            }
+            @keyframes slideUpMobile {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+            
+            /* ขยาย Touch target ของการ์ดตัวเลือกบนมือถือ */
+            .checkbox-card { 
+                padding: 16px 8px; 
+            }
+            
+            /* ป้องกัน iOS ซูมหน้าจออัตโนมัติเมื่อกดช่อง Input */
+            .form-input { 
+                font-size: 16px; 
+            }
+            
+            /* ปรับการเว้นระยะปฏิทินในหน้าจอเล็ก */
+            .calendar-day {
+                min-height: 45px;
+            }
+        }
+
         @keyframes slideInRight { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -375,6 +375,10 @@
 
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                // หาค่าของวันนี้ในรูปแบบ YYYY-MM-DD เพื่อเปรียบเทียบหาอดีต/อนาคต
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
                 for (let i = 0; i < firstDay; i++) {
                     grid.innerHTML += `<div class="empty-day min-h-[50px] bg-transparent"></div>`;
@@ -382,6 +386,7 @@
 
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    // ระบบจะดึงการจองทั้งหมดของวันนี้ (รวมอดีต) มาแสดง
                     const dayBookings = state.getBookingsByDate(dateStr);
                     
                     const hasPending = dayBookings.some(b => b.status === CONFIG.STATUS.PENDING);
@@ -392,10 +397,18 @@
                     else if (hasApproved) bgClass = 'day-approved';
                     else if (hasPending) bgClass = 'day-pending';
 
+                    // UX Logic: เช็คว่าเป็นข้อมูลในอดีตหรือไม่
+                    const isPast = dateStr < todayStr;
+                    // ถ้าเป็นอดีต ให้ลดความสว่างลง (Opacity) และเฟดสีลง เพื่อให้ผู้ใช้แยกแยะได้ง่าย
+                    const pastStyleClass = isPast ? 'opacity-60 grayscale-[40%]' : '';
+
                     const el = document.createElement('div');
-                    el.className = `calendar-day flex flex-col items-center justify-center p-1 rounded min-h-[50px] transition-all ${bgClass} ${dayBookings.length ? 'cursor-pointer hover:shadow-md' : ''}`;
-                    el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length ? `<span class="text-[10px] opacity-90">${dayBookings.length} รายการ</span>` : ''}`;
+                    el.className = `calendar-day flex flex-col items-center justify-center p-1 rounded min-h-[50px] transition-all ${bgClass} ${pastStyleClass} ${dayBookings.length ? 'cursor-pointer hover:shadow-md hover:opacity-100' : ''}`;
                     
+                    // แทรกจำนวนรายการ
+                    el.innerHTML = `<span class="font-bold">${day}</span>${dayBookings.length ? `<span class="text-[10px] ${isPast ? 'text-gray-800 font-medium' : 'opacity-90'}">${dayBookings.length} รายการ</span>` : ''}`;
+                    
+                    // ผู้ใช้งานทั่วไปกดดูประวัติย้อนหลังได้ตลอดเวลา
                     if (dayBookings.length > 0) {
                         el.addEventListener('click', () => this.showModal(dateStr, dayBookings));
                     }
