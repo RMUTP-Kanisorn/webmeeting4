@@ -141,34 +141,47 @@
                     </div>
  
                     <!-- อุปกรณ์เสริม -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <label class="checkbox-card-label">
-                            <input type="checkbox" name="equipment" value="Zoom Meeting">
-                            <div class="checkbox-card">
-                                <i data-lucide="video" class="w-6 h-6 text-blue-500"></i>
-                                <span class="text-sm font-medium">Zoom Meeting</span>
-                            </div>
-                        </label>
+                    <!-- โซนตัวเลือก Zoom และ อุปกรณ์ -->
+                    <div class="space-y-6 border-t border-gray-100 pt-6 mt-2">
+                        
+                        <!-- ตัวเลือก Zoom (ใช้ Radio button เพื่อให้เลือกได้ข้อเดียว) -->
                         <div class="space-y-3">
-                            <label class="text-sm font-semibold">อุปกรณ์ที่ต้องการใช้งาน</label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <label class="text-sm font-semibold flex items-center gap-2"><i data-lucide="video" class="w-4 h-4 text-gray-500"></i> รูปแบบการใช้งาน Zoom <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <label class="checkbox-card-label">
+                                    <input type="radio" name="zoomOption" value="ไม่ใช้ Zoom" checked>
+                                    <div class="checkbox-card">
+                                        <i data-lucide="video-off" class="w-6 h-6 text-gray-400"></i>
+                                        <span class="text-sm font-medium text-gray-600">ไม่ใช้ Zoom</span>
+                                    </div>
+                                </label>
+                                <label class="checkbox-card-label">
+                                    <input type="radio" name="zoomOption" value="เข้า Zoom ที่อื่น">
+                                    <div class="checkbox-card">
+                                        <i data-lucide="monitor-smartphone" class="w-6 h-6 text-blue-500"></i>
+                                        <span class="text-sm font-medium">เข้า Zoom ที่อื่น</span>
+                                    </div>
+                                </label>
+                                <label class="checkbox-card-label">
+                                    <input type="radio" name="zoomOption" value="ใช้ Zoom ของ บก. (เป็น Host)">
+                                    <div class="checkbox-card">
+                                        <i data-lucide="monitor-play" class="w-6 h-6 text-green-500"></i>
+                                        <span class="text-sm font-medium text-center">ใช้ Zoom ของ บก.<br><span class="text-xs font-normal opacity-80">(เป็น Host)</span></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- อุปกรณ์ที่ต้องการใช้งาน (ตัดเครื่องดื่มออก) -->
+                        <div class="space-y-3">
+                            <label class="text-sm font-semibold flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-500"></i> อุปกรณ์ที่ต้องการใช้งาน</label>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="คอมพิวเตอร์"><div class="checkbox-card"><i data-lucide="monitor" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">คอมพิวเตอร์</span></div></label>
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="โปรเจ็คเตอร์"><div class="checkbox-card"><i data-lucide="projector" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">โปรเจ็คเตอร์</span></div></label>
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="พอยเตอร์"><div class="checkbox-card"><i data-lucide="mouse-pointer-2" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">พอยเตอร์</span></div></label>
-                                <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="ไมค์ลอย"><div class="checkbox-card"><i data-lucide="mic" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">ไมค์ลอย (สำหรับห้องประชุมชั้น 5)</span></div></label>
+                                <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="ไมค์ลอย"><div class="checkbox-card"><i data-lucide="mic" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium text-center">ไมค์ลอย<br><span class="text-xs text-gray-400 font-normal">(เฉพาะห้องชั้น 5)</span></span></div></label>
                             </div>
-                        </div>  
-                        <div class="space-y-3">
-                            <label class="text-sm font-semibold">เครื่องดื่มที่ต้องการ</label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <label class="checkbox-card-label"><input type="checkbox" name="drinks" value="น้ำเปล่า"><div class="checkbox-card"><i data-lucide="droplets" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">น้ำเปล่า</span></div></label>
-                                <label class="checkbox-card-label"><input type="checkbox" name="drinks" value="กาแฟ"><div class="checkbox-card"><i data-lucide="coffee" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">กาแฟ</span></div></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="clipboard-list" class="w-4 h-4 text-gray-500"></i> หมายเหตุเพิ่มเติม</label>
-                        <textarea id="documents" class="form-input h-24 resize-none" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+                        </div>   
                     </div>
  
                     <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg">

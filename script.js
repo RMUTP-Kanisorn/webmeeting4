@@ -264,31 +264,46 @@ const BookingController = {
             opt.disabled = opt.value <= start;
         });
     },
-    async handleSubmit(e) {
-        e.preventDefault();
-        if (!this.roomInput.value) {
-            document.getElementById('roomErrorMsg').classList.remove('hidden');
-            return;
-        }
+async handleSubmit(e) {
+                e.preventDefault();
+                if (!this.roomInput.value) {
+                    document.getElementById('roomErrorMsg').classList.remove('hidden');
+                    return;
+                }
 
-        UIView.setLoadingBtn('submitBtn', true);
+                UIView.setLoadingBtn('submitBtn', true);
 
-        const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
+                const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
+                
+                // 1. ดึงค่าตัวเลือก Zoom
+                const zoomSelected = document.querySelector('input[name="zoomOption"]:checked').value;
+                
+                // 2. ดึงค่าอุปกรณ์อื่นๆ
+                const equipSelected = getChecked('equipment');
+                
+                // 3. นำค่า Zoom ไปรวมกับอุปกรณ์ เพื่อส่งเข้า Google Sheets ช่องเดียว (ถ้าไม่ใช้ Zoom ก็ไม่ต้องแปะป้าย)
+                let finalEquipment = '';
+                if (zoomSelected !== 'ไม่ใช้ Zoom') {
+                    finalEquipment = `[${zoomSelected}] `;
+                }
+                finalEquipment += equipSelected;
 
-        const payload = {
-            date: this.dateInput.value,
-            meeting_title: document.getElementById('meetingTitle').value,
-            room_id: this.roomInput.value,
-            start_time: this.startSelect.value,
-            end_time: this.endSelect.value,
-            booker: document.getElementById('bookerName').value,
-            phone: document.getElementById('phoneNumber').value,
-            email: document.getElementById('emailAddress').value,
-            equipment: getChecked('equipment'),
-            drinks: getChecked('drinks'),
-            documents: document.getElementById('documents').value,
-            status: CONFIG.STATUS.PENDING
-        };
+                const payload = {
+                    date: this.dateInput.value,
+                    meeting_title: document.getElementById('meetingTitle').value,
+                    room_id: this.roomInput.value,
+                    start_time: this.startSelect.value,
+                    end_time: this.endSelect.value,
+                    booker: document.getElementById('bookerName').value,
+                    phone: document.getElementById('phoneNumber').value,
+                    email: document.getElementById('emailAddress').value,
+                    equipment: finalEquipment.trim(), // ส่งข้อความอุปกรณ์ที่ถูกจัดเรียงแล้ว
+                    drinks: '-', // ส่งขีด (-) ไปแทน เพื่อไม่ให้คอลัมน์เครื่องดื่มใน Google Sheets พัง
+                    documents: document.getElementById('documents').value,
+                    status: CONFIG.STATUS.PENDING
+                };
+
+                // ... โค้ดส่วนล่าง (try/catch) คงไว้เหมือนเดิม
 
         try {
             const res = await ApiService.request({ action: 'saveBooking', data: payload });
