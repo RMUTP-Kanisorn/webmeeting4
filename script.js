@@ -1,5 +1,5 @@
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/ใส่ลิงก์ของคุณที่นี่/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
