@@ -53,9 +53,10 @@
             opacity: 0; transition: opacity var(--transition-speed) ease; color: white; font-weight: 600;
         }
 
-        /* Checkbox Cards */
+/* Checkbox & Radio Cards */
         .checkbox-card-label { cursor: pointer; }
-        .checkbox-card-label input[type="checkbox"] { display: none; }
+        .checkbox-card-label input[type="checkbox"],
+        .checkbox-card-label input[type="radio"] { display: none; }
         .checkbox-card {
             border-width: 2px; border-radius: 10px; padding: 14px 8px; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;

@@ -296,9 +296,9 @@ async handleSubmit(e) {
                     end_time: this.endSelect.value,
                     booker: document.getElementById('bookerName').value,
                     phone: document.getElementById('phoneNumber').value,
-                    email: document.getElementById('emailAddress').value,
-                    equipment: finalEquipment.trim(), // ส่งข้อความอุปกรณ์ที่ถูกจัดเรียงแล้ว
-                    drinks: '-', // ส่งขีด (-) ไปแทน เพื่อไม่ให้คอลัมน์เครื่องดื่มใน Google Sheets พัง
+                    email: '-', // ส่งขีด (-) ไปแทนช่องอีเมลที่ลบทิ้ง เพื่อให้บันทึกลง Sheet ได้ตามปกติ
+                    equipment: finalEquipment.trim(),
+                    drinks: '-', 
                     documents: document.getElementById('documents').value,
                     status: CONFIG.STATUS.PENDING
                 };
