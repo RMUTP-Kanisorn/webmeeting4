@@ -1,5 +1,5 @@
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
+    API_URL: 'https://script.google.com/macros/s/ใส่ลิงก์ของคุณที่นี่/exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
@@ -34,7 +34,7 @@ const Utils = {
 
 class AppState {
     constructor() {
-        this.bookings = []; // ลบ LocalStorage ออก เพื่อให้แสดงข้อมูลจริงจากเซิร์ฟเวอร์เท่านั้น
+        this.bookings = []; 
         this.currentDate = new Date();
         this.isAdminLoggedIn = false;
     }
@@ -64,14 +64,12 @@ class ApiService {
             let options = { redirect: 'follow' };
 
             if (payload.action === 'getBookings') {
-                // ใช้ GET สำหรับดึงปฏิทิน ทะลุการบล็อกของมือถือ
                 url = `${CONFIG.API_URL}?action=${payload.action}&month=${payload.month || ''}`;
                 options.method = 'GET';
             } else {
-                // ใช้ POST สำหรับบันทึก/แก้ไข
                 options.method = 'POST';
                 options.body = JSON.stringify(payload);
-                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+                // นำ Headers ออกเพื่อหลบการบล็อก CORS ของมือถือ
             }
 
             const response = await fetch(url, options);
@@ -195,6 +193,7 @@ const UIView = {
     },
     setLoadingBtn(btnId, isLoading, originalText = '') {
         const btn = document.getElementById(btnId);
+        if(!btn) return;
         if (isLoading) {
             btn.dataset.orig = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังประมวลผล...';
@@ -216,6 +215,8 @@ const BookingController = {
         this.endSelect = document.getElementById('endTime');
         this.roomCards = document.querySelectorAll('.room-card');
 
+        if(!this.form) return; // ป้องกัน Error ถ้าหาฟอร์มไม่เจอ
+
         const today = new Date();
         today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
         this.dateInput.min = today.toISOString().split('T')[0];
@@ -229,7 +230,7 @@ const BookingController = {
                 this.roomCards.forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.roomInput.value = card.dataset.roomId;
-                document.getElementById('roomErrorMsg').classList.add('hidden');
+                document.getElementById('roomErrorMsg')?.classList.add('hidden');
                 this.updateAvailableSlots();
             });
         });
@@ -264,81 +265,78 @@ const BookingController = {
             opt.disabled = opt.value <= start;
         });
     },
-async handleSubmit(e) {
-                e.preventDefault();
-                if (!this.roomInput.value) {
-                    document.getElementById('roomErrorMsg').classList.remove('hidden');
-                    return;
-                }
+    async handleSubmit(e) {
+        e.preventDefault();
+        if (!this.roomInput.value) {
+            document.getElementById('roomErrorMsg')?.classList.remove('hidden');
+            return;
+        }
 
-                // เริ่มหมุนโหลด
-                UIView.setLoadingBtn('submitBtn', true);
+        UIView.setLoadingBtn('submitBtn', true);
 
-                try {
-                    const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
-                    
-                    // 1. ดึงค่า Zoom (เพิ่มการป้องกัน Error กรณีหาตัวเลือกไม่เจอ)
-                    const zoomEl = document.querySelector('input[name="zoomOption"]:checked');
-                    const zoomSelected = zoomEl ? zoomEl.value : 'ไม่ใช้ Zoom';
-                    
-                    // 2. ดึงอุปกรณ์อื่น
-                    const equipSelected = getChecked('equipment');
-                    
-                    // 3. รวมคำ
-                    let finalEquipment = '';
-                    if (zoomSelected !== 'ไม่ใช้ Zoom') {
-                        finalEquipment = `[${zoomSelected}] `;
-                    }
-                    finalEquipment += equipSelected;
+        try {
+            const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
+            
+            const zoomEl = document.querySelector('input[name="zoomOption"]:checked');
+            const zoomSelected = zoomEl ? zoomEl.value : 'ไม่ใช้ Zoom';
+            
+            const equipSelected = getChecked('equipment');
+            
+            let finalEquipment = '';
+            if (zoomSelected !== 'ไม่ใช้ Zoom') {
+                finalEquipment = `[${zoomSelected}] `;
+            }
+            finalEquipment += equipSelected;
 
-                    // 4. สร้าง Payload (เพิ่มเครื่องหมาย ? เพื่อป้องกัน Error หาก HTML ช่องนั้นถูกลบทิ้งไป)
-                    const payload = {
-                        date: this.dateInput.value,
-                        meeting_title: document.getElementById('meetingTitle')?.value || '-',
-                        room_id: this.roomInput.value,
-                        start_time: this.startSelect.value,
-                        end_time: this.endSelect.value,
-                        booker: document.getElementById('bookerName')?.value || '-',
-                        phone: document.getElementById('phoneNumber')?.value || '-',
-                        email: '-', // บังคับส่งขีดแทนอีเมล
-                        equipment: finalEquipment.trim(),
-                        drinks: '-', // บังคับส่งขีดแทนเครื่องดื่ม
-                        documents: document.getElementById('documents')?.value || '',
-                        status: CONFIG.STATUS.PENDING
-                    };
+            const payload = {
+                date: this.dateInput.value,
+                meeting_title: document.getElementById('meetingTitle')?.value || '-',
+                room_id: this.roomInput.value,
+                start_time: this.startSelect.value,
+                end_time: this.endSelect.value,
+                booker: document.getElementById('bookerName')?.value || '-',
+                phone: document.getElementById('phoneNumber')?.value || '-',
+                email: '-', 
+                equipment: finalEquipment.trim(),
+                drinks: '-', 
+                documents: document.getElementById('documents')?.value || '',
+                status: CONFIG.STATUS.PENDING
+            };
 
-                    const res = await ApiService.request({ action: 'saveBooking', data: payload });
-                    
-                    if (res.ok) {
-                        UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
-                        this.form.reset();
-                        this.roomCards.forEach(c => c.classList.remove('selected'));
-                        this.roomInput.value = '';
-                        
-                        payload.id = res.id;
-                        state.addBooking(payload);
-                    } else {
-                        if (res.error?.includes('จองแล้ว')) {
-                            document.getElementById('conflictMessageTxt').innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
-                            UIView.toggleModal('conflictModal', true);
-                        } else {
-                            UIView.showAlert(res.error || 'การจองล้มเหลว', 'error');
-                        }
-                    }
-                } catch (err) {
-                    // หากโค้ดพัง หรือเน็ตหลุด จะเด้งแจ้งเตือนสีแดง
-                    UIView.showAlert(err.message || 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
-                    console.error(err);
-                } finally {
-                    // Block นี้จะทำงานเสมอ ไม่ว่าจะสำเร็จหรือพัง บังคับให้ปุ่มหยุดหมุน
-                    UIView.setLoadingBtn('submitBtn', false);
+            const res = await ApiService.request({ action: 'saveBooking', data: payload });
+            
+            if (res.ok) {
+                UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
+                this.form.reset();
+                this.roomCards.forEach(c => c.classList.remove('selected'));
+                this.roomInput.value = '';
+                
+                payload.id = res.id;
+                state.addBooking(payload);
+            } else {
+                if (res.error?.includes('จองแล้ว')) {
+                    const conflictMsg = document.getElementById('conflictMessageTxt');
+                    if(conflictMsg) conflictMsg.innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
+                    UIView.toggleModal('conflictModal', true);
+                } else {
+                    UIView.showAlert(res.error || 'การจองล้มเหลว', 'error');
                 }
             }
+        } catch (err) {
+            UIView.showAlert(err.message || 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+            console.error(err);
+        } finally {
+            UIView.setLoadingBtn('submitBtn', false);
+        }
+    }
+};
 
 const CalendarController = {
     init() {
-        document.getElementById('btnPrevMonth').addEventListener('click', () => this.changeMonth(-1));
-        document.getElementById('btnNextMonth').addEventListener('click', () => this.changeMonth(1));
+        const btnPrev = document.getElementById('btnPrevMonth');
+        const btnNext = document.getElementById('btnNextMonth');
+        if(btnPrev) btnPrev.addEventListener('click', () => this.changeMonth(-1));
+        if(btnNext) btnNext.addEventListener('click', () => this.changeMonth(1));
         this.loadData();
     },
     async loadData() {
@@ -352,11 +350,10 @@ const CalendarController = {
                 BookingController.updateAvailableSlots();
                 if (state.isAdminLoggedIn) AdminController.renderDashboard();
             } else {
-                UIView.showAlert('เซิร์ฟเวอร์ตอบกลับข้อผิดพลาด: ' + res.error, 'error');
+                console.error('Server error:', res.error);
             }
         } catch (e) { 
-            // แจ้งเตือนให้เห็นชัดๆ ถ้าระบบพัง
-            UIView.showAlert('โหลดปฏิทินไม่สำเร็จ: ' + e.message, 'error');
+            console.error('Fetch error:', e);
         }
     },
     async changeMonth(offset) {
@@ -366,10 +363,14 @@ const CalendarController = {
     },
     render() {
         const grid = document.getElementById('calendarGrid');
+        if(!grid) return;
+        
         const year = state.currentDate.getFullYear();
         const month = state.currentDate.getMonth();
 
-        document.getElementById('currentMonthDisplay').textContent = `${CONFIG.MONTHS[month]} ${year + 543}`;
+        const monthDisplay = document.getElementById('currentMonthDisplay');
+        if(monthDisplay) monthDisplay.textContent = `${CONFIG.MONTHS[month]} ${year + 543}`;
+        
         grid.innerHTML = '';
 
         const firstDay = new Date(year, month, 1).getDay();
@@ -413,7 +414,8 @@ const CalendarController = {
                 ${dayBookings.map((b, i) => Template.calendarModalItem(b, i)).join('')}
             </div>
         `;
-        document.getElementById('modalContentBody').innerHTML = html;
+        const modalBody = document.getElementById('modalContentBody');
+        if(modalBody) modalBody.innerHTML = html;
         UIView.toggleModal('bookingModal', true);
         Utils.refreshIcons();
     }
@@ -423,25 +425,33 @@ const AdminController = {
     chartStatus: null,
     chartRoom: null,
     init() {
-        document.getElementById('adminLoginForm').addEventListener('submit', (e) => this.handleLogin(e));
-        document.getElementById('adminLogoutBtn').addEventListener('click', () => this.handleLogout());
+        const loginForm = document.getElementById('adminLoginForm');
+        const logoutBtn = document.getElementById('adminLogoutBtn');
+        const searchInput = document.getElementById('searchFilterInput');
+        const roomFilter = document.getElementById('roomFilterSelect');
+        const statusFilter = document.getElementById('statusFilterSelect');
+        const listContainer = document.getElementById('bookingsListContainer');
 
-        document.getElementById('searchFilterInput').addEventListener('input', () => this.renderList());
-        document.getElementById('roomFilterSelect').addEventListener('change', () => this.renderList());
-        document.getElementById('statusFilterSelect').addEventListener('change', () => this.renderList());
+        if(loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        if(logoutBtn) logoutBtn.addEventListener('click', () => this.handleLogout());
+        if(searchInput) searchInput.addEventListener('input', () => this.renderList());
+        if(roomFilter) roomFilter.addEventListener('change', () => this.renderList());
+        if(statusFilter) statusFilter.addEventListener('change', () => this.renderList());
 
-        document.getElementById('bookingsListContainer').addEventListener('click', (e) => {
-            const btn = e.target.closest('.btn-action');
-            if (!btn || !btn.dataset.action) return;
+        if(listContainer) {
+            listContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-action');
+                if (!btn || !btn.dataset.action) return;
 
-            const id = btn.dataset.id;
-            const booking = state.bookings.find(b => b.id === id);
-            if (!booking) return;
+                const id = btn.dataset.id;
+                const booking = state.bookings.find(b => b.id === id);
+                if (!booking) return;
 
-            if (btn.dataset.action === 'approve') this.doAction('approveBooking', booking, `ยืนยันการอนุมัติ?\nระบบจะส่งอีเมลแจ้งไปยัง ${booking.email}`);
-            if (btn.dataset.action === 'reject') this.doAction('rejectBooking', booking, `ไม่อนุมัติการจองนี้ใช่หรือไม่?`);
-            if (btn.dataset.action === 'delete') this.doAction('deleteBooking', booking, `ลบการจองนี้ใช่หรือไม่?\nการกระทำนี้ย้อนกลับไม่ได้`);
-        });
+                if (btn.dataset.action === 'approve') this.doAction('approveBooking', booking, `ยืนยันการอนุมัติ?\nระบบจะส่งอีเมลแจ้งไปยัง ${booking.email}`);
+                if (btn.dataset.action === 'reject') this.doAction('rejectBooking', booking, `ไม่อนุมัติการจองนี้ใช่หรือไม่?`);
+                if (btn.dataset.action === 'delete') this.doAction('deleteBooking', booking, `ลบการจองนี้ใช่หรือไม่?\nการกระทำนี้ย้อนกลับไม่ได้`);
+            });
+        }
     },
     async handleLogin(e) {
         e.preventDefault();
@@ -455,16 +465,18 @@ const AdminController = {
             const res = await ApiService.request({ action: 'adminLogin', data: { user, pass } });
             if (res.ok) {
                 state.isAdminLoggedIn = true;
-                err.classList.add('hidden');
+                if(err) err.classList.add('hidden');
                 document.getElementById('adminLoginBox').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
                 this.renderDashboard();
             } else {
-                err.classList.remove('hidden');
+                if(err) err.classList.remove('hidden');
             }
         } catch (e) {
-            err.innerHTML = '<i data-lucide="wifi-off" class="w-4 h-4"></i> ' + e.message;
-            err.classList.remove('hidden');
+            if(err) {
+                err.innerHTML = '<i data-lucide="wifi-off" class="w-4 h-4"></i> ' + e.message;
+                err.classList.remove('hidden');
+            }
         }
         UIView.setLoadingBtn('adminLoginBtn', false, 'เข้าสู่ระบบ');
     },
@@ -479,10 +491,15 @@ const AdminController = {
         const counts = { pending: 0, approved: 0, rejected: 0, total: state.bookings.length };
         state.bookings.forEach(b => { if (counts[b.status] !== undefined) counts[b.status]++; });
 
-        document.getElementById('statPending').textContent = counts.pending;
-        document.getElementById('statApproved').textContent = counts.approved;
-        document.getElementById('statRejected').textContent = counts.rejected;
-        document.getElementById('statTotal').textContent = counts.total;
+        const elPending = document.getElementById('statPending');
+        const elApproved = document.getElementById('statApproved');
+        const elRejected = document.getElementById('statRejected');
+        const elTotal = document.getElementById('statTotal');
+
+        if(elPending) elPending.textContent = counts.pending;
+        if(elApproved) elApproved.textContent = counts.approved;
+        if(elRejected) elRejected.textContent = counts.rejected;
+        if(elTotal) elTotal.textContent = counts.total;
 
         this.renderCharts();
         this.renderList();
@@ -500,42 +517,55 @@ const AdminController = {
             if (b.status !== CONFIG.STATUS.REJECTED) rooms[b.room_id] = (rooms[b.room_id] || 0) + 1;
         });
 
-        if (this.chartStatus) this.chartStatus.destroy();
-        this.chartStatus = new Chart(document.getElementById('statusChartCanvas'), {
-            type: 'doughnut',
-            data: {
-                labels: ['รออนุมัติ', 'อนุมัติแล้ว', 'ไม่อนุมัติ'],
-                datasets: [{ data: [p, a, r], backgroundColor: ['#f97316', '#10b981', '#ef4444'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Kanit' } } } } }
-        });
+        const statusCanvas = document.getElementById('statusChartCanvas');
+        if (statusCanvas) {
+            if (this.chartStatus) this.chartStatus.destroy();
+            this.chartStatus = new Chart(statusCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['รออนุมัติ', 'อนุมัติแล้ว', 'ไม่อนุมัติ'],
+                    datasets: [{ data: [p, a, r], backgroundColor: ['#f97316', '#10b981', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Kanit' } } } } }
+            });
+        }
 
-        if (this.chartRoom) this.chartRoom.destroy();
-        this.chartRoom = new Chart(document.getElementById('roomChartCanvas'), {
-            type: 'bar',
-            data: {
-                labels: ['ห้อง 1', 'ห้อง 2', 'ห้อง 3', 'ห้อง 4'],
-                datasets: [{
-                    data: [
-                        rooms['ห้องประชุม 1 (รองรับ 13 คน)'] || 0, 
-                        rooms['ห้องประชุม 2 (รองรับ 30 คน)'] || 0, 
-                        rooms['ห้องประชุม 3 (รองรับ 13 คน)'] || 0,
-                        rooms['ห้องประชุม4 (รองรับ 100 คน)'] || 0
-                    ],
-                    backgroundColor: '#3b82f6', borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { display: false } } },
-                plugins: { legend: { display: false } }
-            }
-        });
+        const roomCanvas = document.getElementById('roomChartCanvas');
+        if (roomCanvas) {
+            if (this.chartRoom) this.chartRoom.destroy();
+            this.chartRoom = new Chart(roomCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['ห้อง 1', 'ห้อง 2', 'ห้อง 3', 'ห้อง 4'],
+                    datasets: [{
+                        data: [
+                            rooms['ห้องประชุม 1 (รองรับ 13 คน)'] || 0, 
+                            rooms['ห้องประชุม 2 (รองรับ 30 คน)'] || 0, 
+                            rooms['ห้องประชุม 3 (รองรับ 13 คน)'] || 0,
+                            rooms['ห้องประชุม4 (รองรับ 100 คน)'] || 0
+                        ],
+                        backgroundColor: '#3b82f6', borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     },
     renderList() {
-        const search = document.getElementById('searchFilterInput').value.toLowerCase();
-        const room = document.getElementById('roomFilterSelect').value;
-        const status = document.getElementById('statusFilterSelect').value;
+        const searchInput = document.getElementById('searchFilterInput');
+        const roomFilter = document.getElementById('roomFilterSelect');
+        const statusFilter = document.getElementById('statusFilterSelect');
+        const container = document.getElementById('bookingsListContainer');
+        
+        if(!container) return;
+
+        const search = searchInput ? searchInput.value.toLowerCase() : '';
+        const room = roomFilter ? roomFilter.value : '';
+        const status = statusFilter ? statusFilter.value : '';
 
         let filtered = state.bookings.filter(b => {
             return (!search || b.booker.toLowerCase().includes(search) || b.phone.includes(search) || (b.email || '').toLowerCase().includes(search))
@@ -545,7 +575,6 @@ const AdminController = {
 
         filtered.sort((a, b) => b.date.localeCompare(a.date) || a.start_time.localeCompare(b.start_time));
 
-        const container = document.getElementById('bookingsListContainer');
         if (filtered.length === 0) {
             container.innerHTML = '<div class="text-center text-gray-500 py-10 bg-gray-50 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i> ไม่มีข้อมูลการจอง</div>';
         } else {
