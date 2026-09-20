@@ -74,21 +74,22 @@
         const state = new AppState();
 
 
-        /**
-         * 3. API SERVICE
-         * แยกชั้นจัดการเรื่อง Network Request ชัดเจน
+/**
+         * 3. API SERVICE (อัปเดตสำหรับ Static Website / GitHub)
          */
         class ApiService {
             static async request(payload) {
                 try {
-                    const res = await fetch(CONFIG.API_URL, {
+                    // ใช้ fetch แบบไม่ระบุ Header เพื่อให้เบราว์เซอร์ส่งข้อมูลเป็น text/plain อัตโนมัติ (แก้ปัญหา CORS)
+                    const response = await fetch(CONFIG.API_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload)
                     });
-                    return await res.json();
+                    
+                    return await response.json();
                 } catch (error) {
-                    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต');
+                    console.error("API Error:", error);
+                    throw new Error('เซิร์ฟเวอร์ปฏิเสธการเชื่อมต่อ โปรดตรวจสอบสิทธิ์ของ API');
                 }
             }
         }
@@ -345,7 +346,7 @@
                 this.loadData();
             },
 
-            async loadData() {
+        async loadData() {
                 const year = state.currentDate.getFullYear();
                 const month = String(state.currentDate.getMonth() + 1).padStart(2, '0');
                 try {
@@ -356,8 +357,10 @@
                         BookingController.updateAvailableSlots();
                         if (state.isAdminLoggedIn) AdminController.renderDashboard();
                     }
-                } catch (e) { console.warn('Silent Fetch Error'); }
-            },
+                } catch (e) {
+                    console.error('ไม่สามารถโหลดข้อมูลปฏิทินได้:', e);
+                }
+            }
 
             async changeMonth(offset) {
                 state.currentDate.setMonth(state.currentDate.getMonth() + offset);
