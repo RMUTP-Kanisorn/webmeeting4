@@ -1,5 +1,5 @@
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbyLvUCs7EqW_3ioLQ2AKvUOj7Ira1UpDX_mYiGW7VoIlJaEXqPgzwiJSW1Z8iqrVNk/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
@@ -34,7 +34,7 @@ const Utils = {
 
 class AppState {
     constructor() {
-        this.bookings = [];
+        this.bookings = []; // ลบ LocalStorage ออก เพื่อให้แสดงข้อมูลจริงจากเซิร์ฟเวอร์เท่านั้น
         this.currentDate = new Date();
         this.isAdminLoggedIn = false;
     }
@@ -60,21 +60,32 @@ const state = new AppState();
 class ApiService {
     static async request(payload) {
         try {
+            let url = CONFIG.API_URL;
+            let options = { redirect: 'follow' };
+
             if (payload.action === 'getBookings') {
-                // ใช้ GET สำหรับดึงปฏิทินเพื่อแก้ปัญหาเครื่องคนอื่นมองไม่เห็น
-                const response = await fetch(`${CONFIG.API_URL}?action=getBookings&month=${payload.month || ''}`);
-                return await response.json();
+                // ใช้ GET สำหรับดึงปฏิทิน ทะลุการบล็อกของมือถือ
+                url = `${CONFIG.API_URL}?action=${payload.action}&month=${payload.month || ''}`;
+                options.method = 'GET';
             } else {
-                // ใช้ POST สำหรับบันทึก แก้ ลบ (ไม่ส่ง Content-Type เพื่อหลบ CORS)
-                const response = await fetch(CONFIG.API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                return await response.json();
+                // ใช้ POST สำหรับบันทึก/แก้ไข
+                options.method = 'POST';
+                options.body = JSON.stringify(payload);
+                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+            }
+
+            const response = await fetch(url, options);
+            const text = await response.text(); 
+            
+            try {
+                return JSON.parse(text); 
+            } catch (e) {
+                console.error("เซิร์ฟเวอร์ไม่ได้ตอบกลับเป็น JSON:", text);
+                throw new Error("ลิงก์ API ไม่ถูกต้อง หรือสิทธิ์การเข้าถึงถูกบล็อก");
             }
         } catch (error) {
             console.error("API Error:", error);
-            throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบลิงก์ Web App');
+            throw new Error(error.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
         }
     }
 }
@@ -320,8 +331,13 @@ const CalendarController = {
                 this.render();
                 BookingController.updateAvailableSlots();
                 if (state.isAdminLoggedIn) AdminController.renderDashboard();
+            } else {
+                UIView.showAlert('เซิร์ฟเวอร์ตอบกลับข้อผิดพลาด: ' + res.error, 'error');
             }
-        } catch (e) { console.warn('Silent Fetch Error', e); }
+        } catch (e) { 
+            // แจ้งเตือนให้เห็นชัดๆ ถ้าระบบพัง
+            UIView.showAlert('โหลดปฏิทินไม่สำเร็จ: ' + e.message, 'error');
+        }
     },
     async changeMonth(offset) {
         state.currentDate.setMonth(state.currentDate.getMonth() + offset);
@@ -478,9 +494,14 @@ const AdminController = {
         this.chartRoom = new Chart(document.getElementById('roomChartCanvas'), {
             type: 'bar',
             data: {
-                labels: ['ห้อง 1', 'ห้อง 2', 'ห้อง 3'],
+                labels: ['ห้อง 1', 'ห้อง 2', 'ห้อง 3', 'ห้อง 4'],
                 datasets: [{
-                    data: [rooms['ห้องประชุม 1 (รองรับ 13 คน)'] || 0, rooms['ห้องประชุม 2 (รองรับ 30 คน)'] || 0, rooms['ห้องประชุม 3 (รองรับ 100 คน)'] || 0],
+                    data: [
+                        rooms['ห้องประชุม 1 (รองรับ 13 คน)'] || 0, 
+                        rooms['ห้องประชุม 2 (รองรับ 30 คน)'] || 0, 
+                        rooms['ห้องประชุม 3 (รองรับ 13 คน)'] || 0,
+                        rooms['ห้องประชุม4 (รองรับ 100 คน)'] || 0
+                    ],
                     backgroundColor: '#3b82f6', borderRadius: 4
                 }]
             },
