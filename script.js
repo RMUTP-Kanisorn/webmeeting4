@@ -271,64 +271,69 @@ async handleSubmit(e) {
                     return;
                 }
 
+                // เริ่มหมุนโหลด
                 UIView.setLoadingBtn('submitBtn', true);
 
-                const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
-                
-                // 1. ดึงค่าตัวเลือก Zoom
-                const zoomSelected = document.querySelector('input[name="zoomOption"]:checked').value;
-                
-                // 2. ดึงค่าอุปกรณ์อื่นๆ
-                const equipSelected = getChecked('equipment');
-                
-                // 3. นำค่า Zoom ไปรวมกับอุปกรณ์ เพื่อส่งเข้า Google Sheets ช่องเดียว (ถ้าไม่ใช้ Zoom ก็ไม่ต้องแปะป้าย)
-                let finalEquipment = '';
-                if (zoomSelected !== 'ไม่ใช้ Zoom') {
-                    finalEquipment = `[${zoomSelected}] `;
-                }
-                finalEquipment += equipSelected;
+                try {
+                    const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ');
+                    
+                    // 1. ดึงค่า Zoom (เพิ่มการป้องกัน Error กรณีหาตัวเลือกไม่เจอ)
+                    const zoomEl = document.querySelector('input[name="zoomOption"]:checked');
+                    const zoomSelected = zoomEl ? zoomEl.value : 'ไม่ใช้ Zoom';
+                    
+                    // 2. ดึงอุปกรณ์อื่น
+                    const equipSelected = getChecked('equipment');
+                    
+                    // 3. รวมคำ
+                    let finalEquipment = '';
+                    if (zoomSelected !== 'ไม่ใช้ Zoom') {
+                        finalEquipment = `[${zoomSelected}] `;
+                    }
+                    finalEquipment += equipSelected;
 
-                const payload = {
-                    date: this.dateInput.value,
-                    meeting_title: document.getElementById('meetingTitle').value,
-                    room_id: this.roomInput.value,
-                    start_time: this.startSelect.value,
-                    end_time: this.endSelect.value,
-                    booker: document.getElementById('bookerName').value,
-                    phone: document.getElementById('phoneNumber').value,
-                    email: '-', // ส่งขีด (-) ไปแทนช่องอีเมลที่ลบทิ้ง เพื่อให้บันทึกลง Sheet ได้ตามปกติ
-                    equipment: finalEquipment.trim(),
-                    drinks: '-', 
-                    documents: document.getElementById('documents').value,
-                    status: CONFIG.STATUS.PENDING
-                };
+                    // 4. สร้าง Payload (เพิ่มเครื่องหมาย ? เพื่อป้องกัน Error หาก HTML ช่องนั้นถูกลบทิ้งไป)
+                    const payload = {
+                        date: this.dateInput.value,
+                        meeting_title: document.getElementById('meetingTitle')?.value || '-',
+                        room_id: this.roomInput.value,
+                        start_time: this.startSelect.value,
+                        end_time: this.endSelect.value,
+                        booker: document.getElementById('bookerName')?.value || '-',
+                        phone: document.getElementById('phoneNumber')?.value || '-',
+                        email: '-', // บังคับส่งขีดแทนอีเมล
+                        equipment: finalEquipment.trim(),
+                        drinks: '-', // บังคับส่งขีดแทนเครื่องดื่ม
+                        documents: document.getElementById('documents')?.value || '',
+                        status: CONFIG.STATUS.PENDING
+                    };
 
-                // ... โค้ดส่วนล่าง (try/catch) คงไว้เหมือนเดิม
-
-        try {
-            const res = await ApiService.request({ action: 'saveBooking', data: payload });
-            if (res.ok) {
-                UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
-                this.form.reset();
-                this.roomCards.forEach(c => c.classList.remove('selected'));
-                this.roomInput.value = '';
-
-                payload.id = res.id;
-                state.addBooking(payload);
-            } else {
-                if (res.error?.includes('จองแล้ว')) {
-                    document.getElementById('conflictMessageTxt').innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
-                    UIView.toggleModal('conflictModal', true);
-                } else {
-                    UIView.showAlert(res.error || 'การจองล้มเหลว', 'error');
+                    const res = await ApiService.request({ action: 'saveBooking', data: payload });
+                    
+                    if (res.ok) {
+                        UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
+                        this.form.reset();
+                        this.roomCards.forEach(c => c.classList.remove('selected'));
+                        this.roomInput.value = '';
+                        
+                        payload.id = res.id;
+                        state.addBooking(payload);
+                    } else {
+                        if (res.error?.includes('จองแล้ว')) {
+                            document.getElementById('conflictMessageTxt').innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
+                            UIView.toggleModal('conflictModal', true);
+                        } else {
+                            UIView.showAlert(res.error || 'การจองล้มเหลว', 'error');
+                        }
+                    }
+                } catch (err) {
+                    // หากโค้ดพัง หรือเน็ตหลุด จะเด้งแจ้งเตือนสีแดง
+                    UIView.showAlert(err.message || 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+                    console.error(err);
+                } finally {
+                    // Block นี้จะทำงานเสมอ ไม่ว่าจะสำเร็จหรือพัง บังคับให้ปุ่มหยุดหมุน
+                    UIView.setLoadingBtn('submitBtn', false);
                 }
             }
-        } catch (err) {
-            UIView.showAlert(err.message, 'error');
-        }
-        UIView.setLoadingBtn('submitBtn', false);
-    }
-};
 
 const CalendarController = {
     init() {
