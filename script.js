@@ -520,7 +520,7 @@ const AdminController = {
         this.renderCharts();
         this.renderList();
     },
-    renderCharts() {
+renderCharts() {
         const textColor = '#4b5563';
         const gridColor = '#f3f4f6';
 
@@ -530,9 +530,14 @@ const AdminController = {
             if (b.status === CONFIG.STATUS.PENDING) p++;
             if (b.status === CONFIG.STATUS.APPROVED) a++;
             if (b.status === CONFIG.STATUS.REJECTED) r++;
-            if (b.status !== CONFIG.STATUS.REJECTED) rooms[b.room_id] = (rooms[b.room_id] || 0) + 1;
+            // ดึงค่า room_id จาก Google Sheets มานับจำนวน (ตัดช่องว่างหน้าหลังออกเพื่อป้องกันบั๊ก)
+            if (b.status !== CONFIG.STATUS.REJECTED) {
+                const cleanRoomId = (b.room_id || '').trim();
+                rooms[cleanRoomId] = (rooms[cleanRoomId] || 0) + 1;
+            }
         });
 
+        // 1. กราฟโดนัท (สถานะ)
         const statusCanvas = document.getElementById('statusChartCanvas');
         if (statusCanvas) {
             if (this.chartStatus) this.chartStatus.destroy();
@@ -546,27 +551,49 @@ const AdminController = {
             });
         }
 
+        // 2. กราฟแท่ง (การใช้งานแต่ละห้อง)
         const roomCanvas = document.getElementById('roomChartCanvas');
         if (roomCanvas) {
+            // ดึงจำนวนครั้งของแต่ละห้อง (ตรวจสอบชื่อให้ตรงกับ HTML เป๊ะๆ)
+            const countRoom3 = rooms['ห้องประชุมชั้น 3'] || 0;
+            const countRoom401 = rooms['ห้องประชุม 401'] || 0;
+            const countRoom402 = rooms['ห้องประชุม 402'] || 0;
+            const countRoom5 = rooms['ห้องประชุมชั้น 5'] || 0;
+
             if (this.chartRoom) this.chartRoom.destroy();
             this.chartRoom = new Chart(roomCanvas, {
                 type: 'bar',
                 data: {
-                    labels: ['ชั้น 3', '401', '402', 'ชั้น 5'],
+                    // แสดงจำนวนครั้งห้อยท้ายชื่อห้องเลย
+                    labels: [
+                        `ชั้น 3 (${countRoom3} ครั้ง)`, 
+                        `401 (${countRoom401} ครั้ง)`, 
+                        `402 (${countRoom402} ครั้ง)`, 
+                        `ชั้น 5 (${countRoom5} ครั้ง)`
+                    ],
                     datasets: [{
-                        data: [
-                            rooms['ห้องประชุมชั้น 3'] || 0, 
-                            rooms['ห้องประชุม 401'] || 0, 
-                            rooms['ห้องประชุม 402'] || 0,
-                            rooms['ห้องประชุมชั้น 5'] || 0
-                        ],
+                        data: [countRoom3, countRoom401, countRoom402, countRoom5],
                         backgroundColor: '#3b82f6', borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { display: false } } },
-                    plugins: { legend: { display: false } }
+                    scales: { 
+                        y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, 
+                        x: { ticks: { color: textColor, font: { family: 'Kanit' } }, grid: { display: false } } 
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            titleFont: { family: 'Kanit', size: 14 },
+                            bodyFont: { family: 'Kanit', size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ใช้งานไปแล้ว: ${context.parsed.y} ครั้ง`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
