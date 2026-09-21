@@ -143,7 +143,22 @@ class Template {
         `;
     }
 
-    static calendarModalItem(b, index) {
+static calendarModalItem(b, index) {
+        // แยกลอจิกการแสดงผล Zoom และ อุปกรณ์ ออกจากกัน
+        let zoomInfo = '-';
+        let equipInfo = '-';
+        
+        if (b.equipment) {
+            // ค้นหาข้อความที่อยู่ในวงเล็บเหลี่ยม [...] เพื่อดึงค่า Zoom ออกมา
+            const match = b.equipment.match(/^\[(.*?)\]\s*(.*)$/);
+            if (match) {
+                zoomInfo = match[1]; // ค่า Zoom
+                equipInfo = match[2] || '-'; // อุปกรณ์อื่นๆ ถ้าไม่มีให้แสดง -
+            } else {
+                equipInfo = b.equipment || '-';
+            }
+        }
+
         return `
             <div class="bg-gray-50 rounded-xl p-4 border-l-4 ${b.status === CONFIG.STATUS.APPROVED ? 'border-green-500' : 'border-orange-500'}">
                 <div class="flex justify-between items-center mb-3">
@@ -151,10 +166,13 @@ class Template {
                     ${this.badge(b.status)}
                 </div>
                 <div class="grid grid-cols-1 gap-2 text-sm">
-                    <div class="flex"><span class="text-gray-500 w-20">หัวข้อ:</span> <span class="font-medium">${b.meeting_title || '-'}</span></div>
-                    <div class="flex"><span class="text-gray-500 w-20">ห้อง:</span> <span class="font-medium">${b.room_id}</span></div>
-                    <div class="flex"><span class="text-gray-500 w-20">เวลา:</span> <span class="font-medium">${b.start_time} - ${b.end_time} น.</span></div>
-                    <div class="flex"><span class="text-gray-500 w-20">ผู้จอง:</span> <span class="font-medium">${b.booker}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">หัวข้อ:</span> <span class="font-medium">${b.meeting_title || '-'}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">ห้อง:</span> <span class="font-medium">${b.room_id}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">เวลา:</span> <span class="font-medium">${b.start_time} - ${b.end_time} น.</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">ผู้จอง:</span> <span class="font-medium">${b.booker}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">เบอร์ติดต่อ:</span> <span class="font-medium">${b.phone || '-'}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">Zoom:</span> <span class="font-medium">${zoomInfo}</span></div>
+                    <div class="flex"><span class="text-gray-500 w-24 shrink-0">อุปกรณ์:</span> <span class="font-medium text-blue-600">${equipInfo}</span></div>
                 </div>
             </div>
         `;
