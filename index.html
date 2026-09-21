@@ -5,21 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบช่วยการประชุมออนไลน์</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-gray-800 transition-colors duration-300">
- 
+
     <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            <!-- Logo / Title -->
             <div class="flex items-center gap-3">
                 <h1 class="text-xl md:text-xl font-bold tracking-wide">ระบบจองห้องประชุมอาคารพิทักษ์วารี<span class="hidden sm:inline text-sm font-normal text-gray-500">(Meeting Room Booking System)</span></h1>
             </div>
-
-            <!-- Navigation (Clean Code: Changed to Data Attributes) -->
             <nav class="flex justify-center flex-wrap gap-2">
                 <button data-nav="booking" class="nav-btn active">
                     <i data-lucide="edit-3" class="w-4 h-4"></i> จองห้อง
@@ -28,8 +25,6 @@
                     <i data-lucide="calendar-days" class="w-4 h-4"></i> ปฏิทิน
                 </button>
             </nav>
-
-            <!-- Actions -->
             <div class="flex items-center gap-3 absolute md:static right-4 top-4">
                 <button data-nav="manage" class="p-2 md:px-4 md:py-2 rounded-lg bg-gray-900 text-white hover:opacity-90 font-medium transition flex items-center gap-2">
                     <i data-lucide="settings" class="w-4 h-4"></i> <span class="hidden md:inline">ผู้ดูแลระบบ</span>
@@ -37,9 +32,8 @@
             </div>
         </div>
     </header>
- 
+
     <main class="container mx-auto px-4 md:px-6 py-8">
-        
         <!-- SECTION 1: BOOKING FORM -->
         <section id="booking-section" class="section max-w-5xl mx-auto">
             <div class="bg-white rounded-2xl card-shadow p-6 md:p-8 border border-gray-100">
@@ -49,7 +43,6 @@
                 </header>
                 
                 <form id="bookingForm" class="space-y-8">
-                    <!-- วันที่ & หัวข้อ -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i> วันที่ต้องการจอง <span class="text-red-500">*</span></label>
@@ -60,13 +53,11 @@
                             <input type="text" id="meetingTitle" class="form-input" placeholder="กรอกหัวข้อการประชุม" required>
                         </div>
                     </div>
- 
-                    <!-- เลือกห้องประชุม -->
+
                     <div class="space-y-3">
                         <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-500"></i> เลือกห้องประชุม <span class="text-red-500">*</span></label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="roomCardsContainer">
-                            <!-- Cards will be controlled by JS logic -->
-                             <!-- ห้องที่ 4 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4" id="roomCardsContainer">
+                            
                             <div class="room-card" data-room-id="ห้องประชุมชั้น 3">
                                 <div class="room-img-wrap">
                                     <img src="image/ห้องประชุมชั้น 3.jpg" alt="ห้องประชุมชั้น 3" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+1'">
@@ -77,10 +68,10 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 13 คน</div>
                                 </div>
                             </div>
-                            <!-- ห้องที่ 2 -->
+                            
                             <div class="room-card" data-room-id="ห้องประชุม 401">
                                 <div class="room-img-wrap">
-                                    <img src="image/ห้องประชุม 401.jpg" alt="Room 1" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+2'">
+                                    <img src="image/ห้องประชุม 401.jpg" alt="ห้องประชุม 401" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+2'">
                                     <div class="room-overlay"><i data-lucide="check-circle-2" class="w-5 h-5"></i> เลือกห้องนี้</div>
                                 </div>
                                 <div class="p-4">
@@ -88,10 +79,10 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 30 คน</div>
                                 </div>
                             </div>
-                            <!-- ห้องที่ 3 -->
+                            
                             <div class="room-card" data-room-id="ห้องประชุม 402">
                                 <div class="room-img-wrap">
-                                    <img src="image/ห้องประชุม 402.jpg" alt="Room 2" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+3'">
+                                    <img src="image/ห้องประชุม 402.jpg" alt="ห้องประชุม 402" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+3'">
                                     <div class="room-overlay"><i data-lucide="check-circle-2" class="w-5 h-5"></i> เลือกห้องนี้</div>
                                 </div>
                                 <div class="p-4">
@@ -99,10 +90,10 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 13 คน</div>
                                 </div>
                             </div>
-                            <!-- ห้องที่ 4 -->
+
                             <div class="room-card" data-room-id="ห้องประชุมชั้น 5">
                                 <div class="room-img-wrap">
-                                    <img src="image/ห้องประชุมชั้น 5.jpg" alt="Room 3" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+4'">
+                                    <img src="image/ห้องประชุมชั้น 5.jpg" alt="ห้องประชุมชั้น 5" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+4'">
                                     <div class="room-overlay"><i data-lucide="check-circle-2" class="w-5 h-5"></i> เลือกห้องนี้</div>
                                 </div>
                                 <div class="p-4">
@@ -110,12 +101,12 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 100 คน</div>
                                 </div>
                             </div>
+
                         </div>
                         <input type="hidden" id="roomSelectInput">
                         <p id="roomErrorMsg" class="text-red-500 text-sm hidden flex items-center gap-1"><i data-lucide="alert-circle" class="w-4 h-4"></i> กรุณาเลือกห้องประชุม</p>
                     </div>
- 
-                    <!-- เวลา -->
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="clock" class="w-4 h-4 text-gray-500"></i> เวลาเริ่มต้น <span class="text-red-500">*</span></label>
@@ -126,8 +117,7 @@
                             <select id="endTime" class="form-input" required><option value="">เลือกเวลาสิ้นสุด</option></select>
                         </div>
                     </div>
- 
-<!-- ข้อมูลผู้จอง -->
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="user" class="w-4 h-4 text-gray-500"></i> ชื่อผู้จอง <span class="text-red-500">*</span></label>
@@ -138,12 +128,8 @@
                             <input type="tel" id="phoneNumber" class="form-input" placeholder="08X-XXX-XXXX" required>
                         </div>
                     </div>
- 
-                    <!-- อุปกรณ์เสริม -->
-                    <!-- โซนตัวเลือก Zoom และ อุปกรณ์ -->
+
                     <div class="space-y-6 border-t border-gray-100 pt-6 mt-2">
-                        
-                        <!-- ตัวเลือก Zoom (ใช้ Radio button เพื่อให้เลือกได้ข้อเดียว) -->
                         <div class="space-y-3">
                             <label class="text-sm font-semibold flex items-center gap-2"><i data-lucide="video" class="w-4 h-4 text-gray-500"></i> รูปแบบการใช้งาน Zoom <span class="text-red-500">*</span></label>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -171,25 +157,29 @@
                             </div>
                         </div>
 
-                        <!-- อุปกรณ์ที่ต้องการใช้งาน (ตัดเครื่องดื่มออก) -->
                         <div class="space-y-3">
                             <label class="text-sm font-semibold flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-500"></i> อุปกรณ์ที่ต้องการใช้งาน</label>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="คอมพิวเตอร์"><div class="checkbox-card"><i data-lucide="monitor" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">คอมพิวเตอร์</span></div></label>
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="โปรเจ็คเตอร์"><div class="checkbox-card"><i data-lucide="projector" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">โปรเจ็คเตอร์</span></div></label>
                                 <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="พอยเตอร์"><div class="checkbox-card"><i data-lucide="mouse-pointer-2" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">พอยเตอร์</span></div></label>
-                                <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="ไมค์ลอย"><div class="checkbox-card"><i data-lucide="mic" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium text-center">ไมค์ลอย<br><span class="text-xs text-gray-400 font-normal">(เฉพาะห้องชั้น 5)</span></span></div></label>
+                                <label class="checkbox-card-label"><input type="checkbox" name="equipment" value="ไมค์ลอย"><div class="checkbox-card"><i data-lucide="mic" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium text-center">ไมค์ลอย<br><span class="text-xs text-gray-400 font-normal">(เฉพาะชั้น 5)</span></span></div></label>
                             </div>
-                        </div>   
+                        </div>
                     </div>
- 
+
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="clipboard-list" class="w-4 h-4 text-gray-500"></i> หมายเหตุเพิ่มเติม</label>
+                        <textarea id="documents" class="form-input h-24 resize-none" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+                    </div>
+
                     <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg">
                         <i data-lucide="send" class="w-5 h-5"></i> ส่งคำขอจองห้องประชุม
                     </button>
                 </form>
             </div>
         </section>
- 
+
         <!-- SECTION 2: CALENDAR -->
         <section id="calendar-section" class="section max-w-5xl mx-auto hidden">
             <div class="bg-white rounded-2xl card-shadow p-6 md:p-8 border border-gray-100">
@@ -205,7 +195,6 @@
                     <div class="flex items-center gap-2 text-sm font-medium"><div class="w-3 h-3 rounded-full bg-orange-500"></div> รออนุมัติ</div>
                     <div class="flex items-center gap-2 text-sm font-medium"><div class="w-3 h-3 rounded-full bg-green-500"></div> อนุมัติแล้ว</div>
                 </div>
-                <!-- Weekdays Header -->
                 <div class="grid grid-cols-7 gap-2 mb-2">
                     <div class="text-center font-semibold text-red-500 text-sm">อา</div>
                     <div class="text-center font-semibold text-yellow-500 text-sm">จ</div>
@@ -218,10 +207,9 @@
                 <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
             </div>
         </section>
- 
+
         <!-- SECTION 3: ADMIN DASHBOARD -->
         <section id="manage-section" class="section max-w-5xl mx-auto hidden">
-            <!-- Login -->
             <div id="adminLoginBox" class="max-w-md mx-auto bg-white rounded-2xl card-shadow p-8 mt-10 border border-gray-100">
                 <div class="text-center mb-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4"><i data-lucide="lock" class="w-8 h-8"></i></div>
@@ -241,10 +229,8 @@
                     <button type="submit" id="adminLoginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">เข้าสู่ระบบ</button>
                 </form>
             </div>
- 
-            <!-- Dashboard Content -->
+
             <div id="adminPanel" class="hidden space-y-6">
-                <!-- Header Stats -->
                 <div class="bg-white rounded-2xl card-shadow p-6 border border-gray-100">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
@@ -276,7 +262,6 @@
                     </div>
                 </div>
 
-                <!-- Charts -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-2xl card-shadow border border-gray-100">
                         <h3 class="text-sm font-bold text-gray-500 mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4"></i> สัดส่วนสถานะการจอง</h3>
@@ -287,8 +272,7 @@
                         <div class="chart-container"><canvas id="roomChartCanvas"></canvas></div>
                     </div>
                 </div>
- 
-                <!-- Data List -->
+
                 <div class="bg-white rounded-2xl card-shadow p-6 border border-gray-100">
                     <div class="flex flex-col md:flex-row gap-3 mb-6">
                         <div class="relative flex-1">
@@ -298,10 +282,10 @@
                         <div class="flex gap-2 w-full md:w-auto">
                             <select id="roomFilterSelect" class="form-input flex-1">
                                 <option value="">ทุกห้องประชุม</option>
-                                <option value="ห้องประชุมชั้น 3 (รองรับ 13 คน)">ห้องประชุมชั้น 3</option>
-                                <option value="ห้องประชุม 401 (รองรับ 30 คน)">ห้องประชุม 401</option>
-                                <option value="ห้องประชุม 402 (รองรับ 13 คน)">ห้องประชุม 402</option>
-                                <option value="ห้องประชุมชั้น 5 (รองรับ 100 คน)">ห้องประชุมชั้น 5</option>
+                                <option value="ห้องประชุมชั้น 3">ห้องประชุมชั้น 3</option>
+                                <option value="ห้องประชุม 401">ห้องประชุม 401</option>
+                                <option value="ห้องประชุม 402">ห้องประชุม 402</option>
+                                <option value="ห้องประชุมชั้น 5">ห้องประชุมชั้น 5</option>
                             </select>
                             <select id="statusFilterSelect" class="form-input flex-1">
                                 <option value="">ทุกสถานะ</option>
@@ -316,7 +300,8 @@
             </div>
         </section>
     </main>
-    <!-- Modal: ข้อมูลปฏิทิน -->
+
+    <!-- Modals -->
     <div id="bookingModal" class="modal hidden">
         <div class="modal-content">
             <div class="flex justify-between items-start mb-6">
@@ -327,7 +312,6 @@
         </div>
     </div>
 
-    <!-- Modal: ชนคิว -->
     <div id="conflictModal" class="modal hidden">
         <div class="modal-content text-center max-w-sm mx-auto">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-4"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
@@ -336,13 +320,12 @@
             <button data-close="conflictModal" class="w-full bg-gray-900 text-white font-bold py-3 px-6 rounded-xl transition hover:opacity-90">รับทราบ</button>
         </div>
     </div>
- 
-    <!-- Toast Alert -->
+
     <div id="toastAlert" class="alert hidden">
         <div id="toastIcon"></div>
         <div id="toastMessage" class="flex-1"></div>
     </div>    
- 
+
     <script src="script.js"></script>
 </body>
 </html>

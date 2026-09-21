@@ -1,5 +1,6 @@
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
+    // นำ URL Web App ของคุณ (ที่ลงท้ายด้วย /exec) มาวางตรงนี้
+    API_URL: 'https://script.google.com/macros/s/AKfycb.../exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
@@ -69,7 +70,7 @@ class ApiService {
             } else {
                 options.method = 'POST';
                 options.body = JSON.stringify(payload);
-                // นำ Headers ออกเพื่อหลบการบล็อก CORS ของมือถือ
+                // ไม่ส่ง header Content-Type เพื่อหลบ CORS
             }
 
             const response = await fetch(url, options);
@@ -119,9 +120,7 @@ class Template {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
                     <div class="flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-gray-400"></i> ${b.booker}</div>
                     <div class="flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4 text-gray-400"></i> ${b.phone}</div>
-                    <div class="flex items-center gap-2 sm:col-span-2"><i data-lucide="mail" class="w-4 h-4 text-gray-400"></i> ${b.email || '-'}</div>
                     ${b.equipment ? `<div class="flex items-start gap-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.equipment}</span></div>` : ''}
-                    ${b.drinks ? `<div class="flex items-start gap-2"><i data-lucide="coffee" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.drinks}</span></div>` : ''}
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2">
                     ${isPending ? `
@@ -215,7 +214,7 @@ const BookingController = {
         this.endSelect = document.getElementById('endTime');
         this.roomCards = document.querySelectorAll('.room-card');
 
-        if(!this.form) return; // ป้องกัน Error ถ้าหาฟอร์มไม่เจอ
+        if(!this.form) return;
 
         const today = new Date();
         today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -279,7 +278,6 @@ const BookingController = {
             
             const zoomEl = document.querySelector('input[name="zoomOption"]:checked');
             const zoomSelected = zoomEl ? zoomEl.value : 'ไม่ใช้ Zoom';
-            
             const equipSelected = getChecked('equipment');
             
             let finalEquipment = '';
@@ -447,7 +445,7 @@ const AdminController = {
                 const booking = state.bookings.find(b => b.id === id);
                 if (!booking) return;
 
-                if (btn.dataset.action === 'approve') this.doAction('approveBooking', booking, `ยืนยันการอนุมัติ?\nระบบจะส่งอีเมลแจ้งไปยัง ${booking.email}`);
+                if (btn.dataset.action === 'approve') this.doAction('approveBooking', booking, `ยืนยันการอนุมัติ?`);
                 if (btn.dataset.action === 'reject') this.doAction('rejectBooking', booking, `ไม่อนุมัติการจองนี้ใช่หรือไม่?`);
                 if (btn.dataset.action === 'delete') this.doAction('deleteBooking', booking, `ลบการจองนี้ใช่หรือไม่?\nการกระทำนี้ย้อนกลับไม่ได้`);
             });
@@ -536,13 +534,13 @@ const AdminController = {
             this.chartRoom = new Chart(roomCanvas, {
                 type: 'bar',
                 data: {
-                    labels: ['ห้องประชุมชั้น 3', 'ห้องประชุม 401', 'ห้องประชุม 402', 'ห้องประชุมชั้น 5'],
+                    labels: ['ชั้น 3', '401', '402', 'ชั้น 5'],
                     datasets: [{
                         data: [
-                            rooms['ห้องประชุมชั้น 3 (รองรับ 13 คน)'] || 0, 
-                            rooms['ห้องประชุม 401 (รองรับ 30 คน)'] || 0, 
-                            rooms['ห้องประชุม 402 (รองรับ 13 คน)'] || 0,
-                            rooms['ห้องประชุมชั้น 5(รองรับ 100 คน)'] || 0
+                            rooms['ห้องประชุมชั้น 3'] || 0, 
+                            rooms['ห้องประชุม 401'] || 0, 
+                            rooms['ห้องประชุม 402'] || 0,
+                            rooms['ห้องประชุมชั้น 5'] || 0
                         ],
                         backgroundColor: '#3b82f6', borderRadius: 4
                     }]

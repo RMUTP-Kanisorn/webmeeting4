@@ -1,185 +1,169 @@
-        /* --- Base Setup --- */
-        :root {
-            --color-primary: #3b82f6;
-            --color-primary-hover: #2563eb;
-            --color-primary-light: rgba(59, 130, 246, 0.1);
-            --transition-speed: 0.3s;
-        }
-        
-        * { font-family: 'Kanit', sans-serif; } 
-        body { transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; }
+/* --- Base Setup --- */
+:root {
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-primary-light: rgba(59, 130, 246, 0.1);
+    --transition-speed: 0.3s;
+}
 
-        /* --- Layout & Components --- */
-        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); }
-        .section { display: block; animation: fadeIn 0.4s ease; }
-        .section.hidden { display: none; }
+* { font-family: 'Kanit', sans-serif; } 
+body { transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease; }
 
-        /* Navigation */
-        .nav-btn { 
-            display: flex; align-items: center; gap: 0.5rem;
-            font-weight: 500; padding: 8px 16px; border-radius: 9999px; 
-            transition: all 0.2s ease; border: none; cursor: pointer;
-        }
-        @media (min-width: 768px) { .nav-btn { padding: 10px 24px; } }
-        .nav-btn.active { background-color: var(--color-primary); color: white; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39); }
-        .nav-btn:not(.active):hover { background-color: #f3f4f6; color: #1f2937; }
-        .nav-btn:not(.active) { color: #4b5563; }
+/* --- Layout & Components --- */
+.card-shadow { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); }
+.section { display: block; animation: fadeIn 0.4s ease; }
+.section.hidden { display: none; }
 
-        /* Form Elements */
-        .form-input { 
-            transition: all var(--transition-speed) ease; border-width: 1px; width: 100%;
-            padding: 0.75rem 1rem; border-radius: 0.5rem; outline: none;
-            background: #f9fafb; border-color: #e5e7eb; color: #111827;
-        }
-        .form-input:focus { background: white; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+/* Navigation */
+.nav-btn { 
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 500; padding: 8px 16px; border-radius: 9999px; 
+    transition: all 0.2s ease; border: none; cursor: pointer;
+}
+@media (min-width: 768px) { .nav-btn { padding: 10px 24px; } }
+.nav-btn.active { background-color: var(--color-primary); color: white; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39); }
+.nav-btn:not(.active):hover { background-color: #f3f4f6; color: #1f2937; }
+.nav-btn:not(.active) { color: #4b5563; }
 
-        /* Room Cards */
-        .room-card {
-            border-width: 2px; border-radius: 12px; overflow: hidden;
-            cursor: pointer; transition: all var(--transition-speed) ease;
-            background: white; border-color: #e5e7eb;
-        }
-        .room-card:hover { transform: translateY(-4px); border-color: var(--color-primary); box-shadow: 0 12px 24px rgba(0,0,0,0.05); }
-        
-        .room-card.selected { border-color: var(--color-primary-hover); background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
-        .room-card.selected .room-overlay { opacity: 1; }
-        
-        .room-img-wrap { position: relative; overflow: hidden; height: 120px; }
-        .room-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .room-card:hover .room-img { transform: scale(1.05); }
-        .room-overlay {
-            position: absolute; inset: 0; background: rgba(37,99,235,0.8);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            opacity: 0; transition: opacity var(--transition-speed) ease; color: white; font-weight: 600;
-        }
+/* Form Elements */
+.form-input { 
+    transition: all var(--transition-speed) ease; border-width: 1px; width: 100%;
+    padding: 0.75rem 1rem; border-radius: 0.5rem; outline: none;
+    background: #f9fafb; border-color: #e5e7eb; color: #111827;
+}
+.form-input:focus { background: white; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+
+/* Room Cards */
+.room-card {
+    border-width: 2px; border-radius: 12px; overflow: hidden;
+    cursor: pointer; transition: all var(--transition-speed) ease;
+    background: white; border-color: #e5e7eb;
+}
+.room-card:hover { transform: translateY(-4px); border-color: var(--color-primary); box-shadow: 0 12px 24px rgba(0,0,0,0.05); }
+
+.room-card.selected { border-color: var(--color-primary-hover); background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+.room-card.selected .room-overlay { opacity: 1; }
+
+.room-img-wrap { position: relative; overflow: hidden; height: 120px; }
+.room-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.room-card:hover .room-img { transform: scale(1.05); }
+.room-overlay {
+    position: absolute; inset: 0; background: rgba(37,99,235,0.8);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    opacity: 0; transition: opacity var(--transition-speed) ease; color: white; font-weight: 600;
+}
 
 /* Checkbox & Radio Cards */
-        .checkbox-card-label { cursor: pointer; }
-        .checkbox-card-label input[type="checkbox"],
-        .checkbox-card-label input[type="radio"] { display: none; }
-        .checkbox-card {
-            border-width: 2px; border-radius: 10px; padding: 14px 8px; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.25s ease; text-align: center; user-select: none; 
-            background: white; border-color: #e5e7eb;
-        }
-        .checkbox-card-label:hover .checkbox-card { border-color: #93c5fd; background: #f8fafc; }
-        .checkbox-card-label input:checked + .checkbox-card { border-color: var(--color-primary-hover); background: #eff6ff; }
+.checkbox-card-label { cursor: pointer; }
+.checkbox-card-label input[type="checkbox"],
+.checkbox-card-label input[type="radio"] { display: none; }
+.checkbox-card {
+    border-width: 2px; border-radius: 10px; padding: 14px 8px; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.25s ease; text-align: center; user-select: none; 
+    background: white; border-color: #e5e7eb;
+}
+.checkbox-card-label:hover .checkbox-card { border-color: #93c5fd; background: #f8fafc; }
+.checkbox-card-label input:checked + .checkbox-card { border-color: var(--color-primary-hover); background: #eff6ff; }
 
-        /* Calendar & Status */
-        .day-pending { background-color: #f97316 !important; color: white !important; cursor: pointer; border: none;}
-        .day-approved { background-color: #10b981 !important; color: white !important; cursor: pointer; border: none;}
-        .day-mixed { background: linear-gradient(135deg, #f97316 50%, #10b981 50%) !important; color: white !important; cursor: pointer; border: none;}
-        
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;}
-        .badge-pending { background: rgba(249,115,22,0.1); color: #ea580c; border: 1px solid rgba(249,115,22,0.2); }
-        .badge-approved { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-        .badge-rejected { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+/* Calendar & Status */
+.day-pending { background-color: #f97316 !important; color: white !important; cursor: pointer; border: none;}
+.day-approved { background-color: #10b981 !important; color: white !important; cursor: pointer; border: none;}
+.day-mixed { background: linear-gradient(135deg, #f97316 50%, #10b981 50%) !important; color: white !important; cursor: pointer; border: none;}
 
-        /* Admin Items */
-        .booking-item { border-radius: 12px; padding: 16px; transition: all 0.2s ease; margin-bottom: 16px; border-width: 1px; background: #ffffff; border-color: #e5e7eb; }
-        .booking-item.status-pending { border-left: 4px solid #f97316; }
-        .booking-item.status-approved { border-left: 4px solid #10b981; }
-        .booking-item.status-rejected { border-left: 4px solid #ef4444; opacity: 0.7; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;}
+.badge-pending { background: rgba(249,115,22,0.1); color: #ea580c; border: 1px solid rgba(249,115,22,0.2); }
+.badge-approved { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+.badge-rejected { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
 
-        /* Buttons */
-        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 0.875rem;}
-        .btn-approve { background: #10b981; color: white; }
-        .btn-approve:hover { background: #059669; }
-        .btn-approve:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
-        .btn-reject { background: #f97316; color: white; }
-        .btn-reject:hover { background: #ea580c; }
-        .btn-delete { background: #ef4444; color: white; }
-        .btn-delete:hover { background: #dc2626; }
+/* Admin Items */
+.booking-item { border-radius: 12px; padding: 16px; transition: all 0.2s ease; margin-bottom: 16px; border-width: 1px; background: #ffffff; border-color: #e5e7eb; }
+.booking-item.status-pending { border-left: 4px solid #f97316; }
+.booking-item.status-approved { border-left: 4px solid #10b981; }
+.booking-item.status-rejected { border-left: 4px solid #ef4444; opacity: 0.7; }
 
-        /* Modals & Alerts */
-        .modal { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); 
-            display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; animation: fadeIn 0.2s ease;
-        }
-        .modal.hidden { display: none; }
-        .modal-content { 
-            border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; 
-            overflow-y: auto; animation: slideUp 0.3s ease;
-            background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        }
+/* Buttons */
+.btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 0.875rem;}
+.btn-approve { background: #10b981; color: white; }
+.btn-approve:hover { background: #059669; }
+.btn-approve:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+.btn-reject { background: #f97316; color: white; }
+.btn-reject:hover { background: #ea580c; }
+.btn-delete { background: #ef4444; color: white; }
+.btn-delete:hover { background: #dc2626; }
 
-        .alert { 
-            position: fixed; top: 20px; right: 20px; left: 20px;
-            padding: 16px 20px; border-radius: 12px; color: white; font-weight: 500;
-            z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; align-items: center; gap: 12px;
-        }
-        @media (min-width: 768px) { .alert { left: auto; min-width: 300px; max-width: 450px; } }
-        .alert.hidden { display: none; }
-        .alert.success { background: #10b981; }
-        .alert.error { background: #ef4444; }
+/* Modals & Alerts */
+.modal { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); 
+    display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; animation: fadeIn 0.2s ease;
+}
+.modal.hidden { display: none; }
+.modal-content { 
+    border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; 
+    overflow-y: auto; animation: slideUp 0.3s ease;
+    background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
 
-        /* Utilities */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .chart-container { position: relative; height: 260px; width: 100%; }
+.alert { 
+    position: fixed; top: 20px; right: 20px; left: 20px;
+    padding: 16px 20px; border-radius: 12px; color: white; font-weight: 500;
+    z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: flex; align-items: center; gap: 12px;
+}
+@media (min-width: 768px) { .alert { left: auto; min-width: 300px; max-width: 450px; } }
+.alert.hidden { display: none; }
+.alert.success { background: #10b981; }
+.alert.error { background: #ef4444; }
 
-        /* --- Mobile UI / UX Optimization --- */
-        @media (max-width: 640px) {
-            /* ปรับ Modal ให้เป็น Bottom Sheet บนมือถือเพื่อให้กดง่ายขึ้นด้วยมือเดียว */
-            .modal { 
-                align-items: flex-end; 
-                padding: 0; 
-            }
-            .modal-content { 
-                border-radius: 24px 24px 0 0; 
-                padding: 24px 20px 40px; 
-                max-height: 85vh; 
-                animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
-            }
-            @keyframes slideUpMobile {
-                from { transform: translateY(100%); }
-                to { transform: translateY(0); }
-            }
-            
-            /* ขยาย Touch target ของการ์ดตัวเลือกบนมือถือ */
-            .checkbox-card { 
-                padding: 16px 8px; 
-            }
-            
-            /* ป้องกัน iOS ซูมหน้าจออัตโนมัติเมื่อกดช่อง Input */
-            .form-input { 
-                font-size: 16px; 
-            }
-            
-            /* ปรับการเว้นระยะปฏิทินในหน้าจอเล็ก */
-            .calendar-day {
-                min-height: 45px;
-            }
-        }
+/* Utilities */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.chart-container { position: relative; height: 260px; width: 100%; }
 
-        @keyframes slideInRight { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* --- Mobile UI / UX Optimization --- */
+@media (max-width: 640px) {
+    .modal { 
+        align-items: flex-end; 
+        padding: 0; 
+    }
+    .modal-content { 
+        border-radius: 24px 24px 0 0; 
+        padding: 24px 20px 40px; 
+        max-height: 85vh; 
+        animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+    }
+    @keyframes slideUpMobile {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    .checkbox-card { padding: 16px 8px; }
+    .form-input { font-size: 16px; }
+    .calendar-day { min-height: 45px; }
+}
 
-                /* --- แก้ไข UI Layout --- */
-        /* 1. บังคับช่องวันที่ให้มีกรอบและขนาดเท่าช่องข้อความปกติ (แก้บั๊กมือถือ/iOS) */
-        input[type="date"] {
-            appearance: none;
-            -webkit-appearance: none;
-            background-color: #ffffff;
-            border: 1px solid #d1d5db !important; /* สีกรอบมาตรฐาน */
-            border-radius: 0.5rem;
-            min-height: 48px;
-            padding: 0.75rem;
-            width: 100%;
-        }
+@keyframes slideInRight { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (min-width: 768px) { @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 2. จัดปุ่มเฟือง Admin และโลโก้ให้อยู่กึ่งกลางแนวตั้ง ไม่ลอยทะลุกรอบ */
-        header > div {
-            display: flex !important;
-            align-items: center !important;
-            min-height: 64px; /* กำหนดความสูงตายตัวให้ header */
-        }
-        header button {
-            margin-top: 0 !important; /* ลบระยะขอบส่วนเกินที่ดันปุ่มขึ้นไป */
-        }
+/* --- แก้ไข UI Layout --- */
+input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem;
+    min-height: 48px;
+    padding: 0.75rem;
+    width: 100%;
+}
+header > div {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 64px; 
+}
+header button {
+    margin-top: 0 !important; 
+}
