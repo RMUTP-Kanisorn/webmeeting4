@@ -1,6 +1,6 @@
 const CONFIG = {
     // นำ URL Web App ของคุณ (ที่ลงท้ายด้วย /exec) มาวางตรงนี้
-    API_URL: 'https://script.google.com/macros/s/AKfycb.../exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
