@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจองห้องประชุมอาคารพิทักษ์วารี</title>
+    <title>ระบบช่วยการประชุมออนไลน์</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -57,7 +57,6 @@
                     <div class="space-y-3">
                         <label class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-500"></i> เลือกห้องประชุม <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4" id="roomCardsContainer">
-                            
                             <div class="room-card" data-room-id="ห้องประชุมชั้น 3">
                                 <div class="room-img-wrap">
                                     <img src="image/ห้องประชุมชั้น 3.jpg" alt="ห้องประชุมชั้น 3" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+1'">
@@ -68,7 +67,6 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 13 คน</div>
                                 </div>
                             </div>
-                            
                             <div class="room-card" data-room-id="ห้องประชุม 401">
                                 <div class="room-img-wrap">
                                     <img src="image/ห้องประชุม 401.jpg" alt="ห้องประชุม 401" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+2'">
@@ -79,7 +77,6 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 30 คน</div>
                                 </div>
                             </div>
-                            
                             <div class="room-card" data-room-id="ห้องประชุม 402">
                                 <div class="room-img-wrap">
                                     <img src="image/ห้องประชุม 402.jpg" alt="ห้องประชุม 402" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+3'">
@@ -90,7 +87,6 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 13 คน</div>
                                 </div>
                             </div>
-
                             <div class="room-card" data-room-id="ห้องประชุมชั้น 5">
                                 <div class="room-img-wrap">
                                     <img src="image/ห้องประชุมชั้น 5.jpg" alt="ห้องประชุมชั้น 5" class="room-img" onerror="this.src='https://placehold.co/400x220?text=Room+4'">
@@ -101,7 +97,6 @@
                                     <div class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> รองรับ 100 คน</div>
                                 </div>
                             </div>
-
                         </div>
                         <input type="hidden" id="roomSelectInput">
                         <p id="roomErrorMsg" class="text-red-500 text-sm hidden flex items-center gap-1"><i data-lucide="alert-circle" class="w-4 h-4"></i> กรุณาเลือกห้องประชุม</p>
@@ -135,24 +130,15 @@
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <label class="checkbox-card-label">
                                     <input type="radio" name="zoomOption" value="ไม่ใช้ Zoom" checked>
-                                    <div class="checkbox-card">
-                                        <i data-lucide="video-off" class="w-6 h-6 text-gray-400"></i>
-                                        <span class="text-sm font-medium text-gray-600">ไม่ใช้ Zoom</span>
-                                    </div>
+                                    <div class="checkbox-card"><i data-lucide="video-off" class="w-6 h-6 text-gray-400"></i><span class="text-sm font-medium text-gray-600">ไม่ใช้ Zoom</span></div>
                                 </label>
                                 <label class="checkbox-card-label">
                                     <input type="radio" name="zoomOption" value="เข้า Zoom ที่อื่น">
-                                    <div class="checkbox-card">
-                                        <i data-lucide="monitor-smartphone" class="w-6 h-6 text-blue-500"></i>
-                                        <span class="text-sm font-medium">เข้า Zoom ที่อื่น</span>
-                                    </div>
+                                    <div class="checkbox-card"><i data-lucide="monitor-smartphone" class="w-6 h-6 text-blue-500"></i><span class="text-sm font-medium">เข้า Zoom ที่อื่น</span></div>
                                 </label>
                                 <label class="checkbox-card-label">
                                     <input type="radio" name="zoomOption" value="ใช้ Zoom ของ บก. (เป็น Host)">
-                                    <div class="checkbox-card">
-                                        <i data-lucide="monitor-play" class="w-6 h-6 text-green-500"></i>
-                                        <span class="text-sm font-medium text-center">ใช้ Zoom ของ บก.<br><span class="text-xs font-normal opacity-80">(เป็น Host)</span></span>
-                                    </div>
+                                    <div class="checkbox-card"><i data-lucide="monitor-play" class="w-6 h-6 text-green-500"></i><span class="text-sm font-medium text-center">ใช้ Zoom ของ บก.<br><span class="text-xs font-normal opacity-80">(เป็น Host)</span></span></div>
                                 </label>
                             </div>
                         </div>
@@ -194,10 +180,8 @@
                 <div class="flex flex-wrap items-center gap-4 mb-6">
                     <div class="flex items-center gap-2 text-sm font-medium"><div class="w-3 h-3 rounded-full bg-orange-500"></div> รออนุมัติ</div>
                     <div class="flex items-center gap-2 text-sm font-medium"><div class="w-3 h-3 rounded-full bg-green-500"></div> อนุมัติแล้ว</div>
-                    
-                    <!-- ถ้าข้อมูลไม่ขึ้น ให้กดรีเฟรชหน้าจอ 1 ครั้ง -->
                     <div class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md sm:ml-2 border border-blue-100">
-                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> หากข้อมูลไม่ขึ้น ให้กดรีเฟรชหน้าจอ 1 ครั้ง
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ถ้าข้อมูลไม่ขึ้น ให้กดรีเฟรชหน้าจอ 1 ครั้ง
                     </div>
                 </div>
                 <div class="grid grid-cols-7 gap-2 mb-2">
@@ -306,7 +290,6 @@
         </section>
     </main>
 
-    <!-- Modals -->
     <div id="bookingModal" class="modal hidden">
         <div class="modal-content">
             <div class="flex justify-between items-start mb-6">

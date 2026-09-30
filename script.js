@@ -1,5 +1,5 @@
 const CONFIG = {
-    // นำ URL Web App ของคุณ (ที่ลงท้ายด้วย /exec) มาวางตรงนี้
+    // นำ URL Web App ของคุณมาใส่ที่นี่
     API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
@@ -39,19 +39,13 @@ class AppState {
         this.currentDate = new Date();
         this.isAdminLoggedIn = false;
     }
-    setBookings(newBookings) {
-        this.bookings = newBookings;
-    }
-    addBooking(booking) {
-        this.bookings.push(booking);
-    }
+    setBookings(newBookings) { this.bookings = newBookings; }
+    addBooking(booking) { this.bookings.push(booking); }
     updateBookingStatus(id, newStatus) {
         const b = this.bookings.find(item => item.id === id);
         if (b) b.status = newStatus;
     }
-    removeBooking(id) {
-        this.bookings = this.bookings.filter(b => b.id !== id);
-    }
+    removeBooking(id) { this.bookings = this.bookings.filter(b => b.id !== id); }
     getBookingsByDate(dateStr) {
         return this.bookings.filter(b => b.date === dateStr && b.status !== CONFIG.STATUS.REJECTED);
     }
@@ -61,26 +55,21 @@ const state = new AppState();
 class ApiService {
     static async request(payload) {
         try {
-            let url = CONFIG.API_URL;
-            let options = { redirect: 'follow' };
+            // ใช้ POST ในการส่ง/ดึงข้อมูลทั้งหมด เพื่อหลีกเลี่ยงการถูก Block จากเบราว์เซอร์
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                redirect: 'follow'
+            };
 
-            if (payload.action === 'getBookings') {
-                url = `${CONFIG.API_URL}?action=${payload.action}&month=${payload.month || ''}`;
-                options.method = 'GET';
-            } else {
-                options.method = 'POST';
-                options.body = JSON.stringify(payload);
-                // ไม่ส่ง header Content-Type เพื่อหลบ CORS
-            }
-
-            const response = await fetch(url, options);
+            const response = await fetch(CONFIG.API_URL, options);
             const text = await response.text(); 
             
             try {
                 return JSON.parse(text); 
             } catch (e) {
-                console.error("เซิร์ฟเวอร์ไม่ได้ตอบกลับเป็น JSON:", text);
-                throw new Error("ลิงก์ API ไม่ถูกต้อง หรือสิทธิ์การเข้าถึงถูกบล็อก");
+                console.error("Server response error:", text);
+                throw new Error("ระบบทำงานขัดข้อง หรือสิทธิ์การเข้าถึงถูกบล็อก");
             }
         } catch (error) {
             console.error("API Error:", error);
@@ -120,7 +109,7 @@ class Template {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
                     <div class="flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-gray-400"></i> ${b.booker}</div>
                     <div class="flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4 text-gray-400"></i> ${b.phone}</div>
-                    ${b.equipment ? `<div class="flex items-start gap-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.equipment}</span></div>` : ''}
+                    ${b.equipment ? `<div class="flex items-start gap-2 sm:col-span-2"><i data-lucide="monitor" class="w-4 h-4 text-gray-400 mt-0.5"></i> <span>${b.equipment}</span></div>` : ''}
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2">
                     ${isPending ? `
@@ -143,17 +132,14 @@ class Template {
         `;
     }
 
-static calendarModalItem(b, index) {
-        // แยกลอจิกการแสดงผล Zoom และ อุปกรณ์ ออกจากกัน
+    static calendarModalItem(b, index) {
         let zoomInfo = '-';
         let equipInfo = '-';
-        
         if (b.equipment) {
-            // ค้นหาข้อความที่อยู่ในวงเล็บเหลี่ยม [...] เพื่อดึงค่า Zoom ออกมา
             const match = b.equipment.match(/^\[(.*?)\]\s*(.*)$/);
             if (match) {
-                zoomInfo = match[1]; // ค่า Zoom
-                equipInfo = match[2] || '-'; // อุปกรณ์อื่นๆ ถ้าไม่มีให้แสดง -
+                zoomInfo = match[1];
+                equipInfo = match[2] || '-';
             } else {
                 equipInfo = b.equipment || '-';
             }
@@ -183,7 +169,6 @@ const UIView = {
     switchSection(sectionId) {
         document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
         document.getElementById(`${sectionId}-section`)?.classList.remove('hidden');
 
         const navBtn = document.querySelector(`[data-nav="${sectionId}"]`);
@@ -299,27 +284,28 @@ const BookingController = {
             const equipSelected = getChecked('equipment');
             
             let finalEquipment = '';
-            if (zoomSelected !== 'ไม่ใช้ Zoom') {
-                finalEquipment = `[${zoomSelected}] `;
-            }
+            if (zoomSelected !== 'ไม่ใช้ Zoom') finalEquipment = `[${zoomSelected}] `;
             finalEquipment += equipSelected;
 
             const payload = {
-                date: this.dateInput.value,
-                meeting_title: document.getElementById('meetingTitle')?.value || '-',
-                room_id: this.roomInput.value,
-                start_time: this.startSelect.value,
-                end_time: this.endSelect.value,
-                booker: document.getElementById('bookerName')?.value || '-',
-                phone: document.getElementById('phoneNumber')?.value || '-',
-                email: '-', 
-                equipment: finalEquipment.trim(),
-                drinks: '-', 
-                documents: document.getElementById('documents')?.value || '',
-                status: CONFIG.STATUS.PENDING
+                action: 'saveBooking',
+                data: {
+                    date: this.dateInput.value,
+                    meeting_title: document.getElementById('meetingTitle')?.value || '-',
+                    room_id: this.roomInput.value,
+                    start_time: this.startSelect.value,
+                    end_time: this.endSelect.value,
+                    booker: document.getElementById('bookerName')?.value || '-',
+                    phone: document.getElementById('phoneNumber')?.value || '-',
+                    email: '-', 
+                    equipment: finalEquipment.trim(),
+                    drinks: '-', 
+                    documents: document.getElementById('documents')?.value || '',
+                    status: CONFIG.STATUS.PENDING
+                }
             };
 
-            const res = await ApiService.request({ action: 'saveBooking', data: payload });
+            const res = await ApiService.request(payload);
             
             if (res.ok) {
                 UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
@@ -327,8 +313,8 @@ const BookingController = {
                 this.roomCards.forEach(c => c.classList.remove('selected'));
                 this.roomInput.value = '';
                 
-                payload.id = res.id;
-                state.addBooking(payload);
+                payload.data.id = res.id;
+                state.addBooking(payload.data);
             } else {
                 if (res.error?.includes('จองแล้ว')) {
                     const conflictMsg = document.getElementById('conflictMessageTxt');
@@ -340,7 +326,6 @@ const BookingController = {
             }
         } catch (err) {
             UIView.showAlert(err.message || 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
-            console.error(err);
         } finally {
             UIView.setLoadingBtn('submitBtn', false);
         }
@@ -365,8 +350,6 @@ const CalendarController = {
                 this.render();
                 BookingController.updateAvailableSlots();
                 if (state.isAdminLoggedIn) AdminController.renderDashboard();
-            } else {
-                console.error('Server error:', res.error);
             }
         } catch (e) { 
             console.error('Fetch error:', e);
@@ -520,7 +503,7 @@ const AdminController = {
         this.renderCharts();
         this.renderList();
     },
-renderCharts() {
+    renderCharts() {
         const textColor = '#4b5563';
         const gridColor = '#f3f4f6';
 
@@ -530,14 +513,12 @@ renderCharts() {
             if (b.status === CONFIG.STATUS.PENDING) p++;
             if (b.status === CONFIG.STATUS.APPROVED) a++;
             if (b.status === CONFIG.STATUS.REJECTED) r++;
-            // ดึงค่า room_id จาก Google Sheets มานับจำนวน (ตัดช่องว่างหน้าหลังออกเพื่อป้องกันบั๊ก)
             if (b.status !== CONFIG.STATUS.REJECTED) {
                 const cleanRoomId = (b.room_id || '').trim();
                 rooms[cleanRoomId] = (rooms[cleanRoomId] || 0) + 1;
             }
         });
 
-        // 1. กราฟโดนัท (สถานะ)
         const statusCanvas = document.getElementById('statusChartCanvas');
         if (statusCanvas) {
             if (this.chartStatus) this.chartStatus.destroy();
@@ -551,10 +532,8 @@ renderCharts() {
             });
         }
 
-        // 2. กราฟแท่ง (การใช้งานแต่ละห้อง)
         const roomCanvas = document.getElementById('roomChartCanvas');
         if (roomCanvas) {
-            // ดึงจำนวนครั้งของแต่ละห้อง (ตรวจสอบชื่อให้ตรงกับ HTML เป๊ะๆ)
             const countRoom3 = rooms['ห้องประชุมชั้น 3'] || 0;
             const countRoom401 = rooms['ห้องประชุม 401'] || 0;
             const countRoom402 = rooms['ห้องประชุม 402'] || 0;
@@ -564,13 +543,7 @@ renderCharts() {
             this.chartRoom = new Chart(roomCanvas, {
                 type: 'bar',
                 data: {
-                    // แสดงจำนวนครั้งห้อยท้ายชื่อห้องเลย
-                    labels: [
-                        `ชั้น 3 (${countRoom3} ครั้ง)`, 
-                        `401 (${countRoom401} ครั้ง)`, 
-                        `402 (${countRoom402} ครั้ง)`, 
-                        `ชั้น 5 (${countRoom5} ครั้ง)`
-                    ],
+                    labels: [`ชั้น 3 (${countRoom3} ครั้ง)`, `401 (${countRoom401} ครั้ง)`, `402 (${countRoom402} ครั้ง)`, `ชั้น 5 (${countRoom5} ครั้ง)`],
                     datasets: [{
                         data: [countRoom3, countRoom401, countRoom402, countRoom5],
                         backgroundColor: '#3b82f6', borderRadius: 4
@@ -578,20 +551,12 @@ renderCharts() {
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, 
-                        x: { ticks: { color: textColor, font: { family: 'Kanit' } }, grid: { display: false } } 
-                    },
+                    scales: { y: { ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor, font: { family: 'Kanit' } }, grid: { display: false } } },
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
-                            titleFont: { family: 'Kanit', size: 14 },
-                            bodyFont: { family: 'Kanit', size: 14 },
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ใช้งานไปแล้ว: ${context.parsed.y} ครั้ง`;
-                                }
-                            }
+                            titleFont: { family: 'Kanit', size: 14 }, bodyFont: { family: 'Kanit', size: 14 },
+                            callbacks: { label: function(context) { return ` ใช้งานไปแล้ว: ${context.parsed.y} ครั้ง`; } }
                         }
                     }
                 }
@@ -632,7 +597,6 @@ renderCharts() {
             const payload = {
                 action: actionName,
                 id: bookingObj.id,
-                email: bookingObj.email,
                 booker: bookingObj.booker,
                 date: bookingObj.date,
                 startTime: bookingObj.start_time,
