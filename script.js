@@ -16,6 +16,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const CONFIG = {
+    GAS_URL: 'https://script.google.com/macros/s/AKfycbx1fDxEm4AoKsxywNLbSLElEf-FqsBNLIEGJxy_OLaMRANLzzYWEGpuyrPtE3t4HRk/exec', 
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
@@ -70,70 +71,77 @@ const state = new AppState();
 // ==========================================
 // 2. จัดการข้อมูลผ่าน Cloud Firestore
 // ==========================================
+// ==========================================
+// 2. จัดการข้อมูลผ่าน Cloud Firestore & Sync Google Sheets
+// ==========================================
 class FirestoreService {
+    
+    // ฟังก์ชันส่งสำเนาเข้า Google Sheets แบบทำงานเบื้องหลัง (ไม่รบกวนความเร็วเว็บ)
+    static syncToSheet(action, data) {
+        if (!CONFIG.GAS_URL) return;
+        try {
+            fetch(CONFIG.GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: action, data: data })
+            }).catch(e => console.log("Sheet Sync error:", e));
+        } catch(e) {}
+    }
+
     static async getBookings() {
         try {
             const snapshot = await db.collection('bookings').get();
             const bookings = [];
-            snapshot.forEach(doc => {
-                bookings.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach(doc => { bookings.push({ id: doc.id, ...doc.data() }); });
             return { ok: true, data: bookings };
-        } catch (error) {
-            console.error("Firestore Get Error:", error);
-            return { ok: false, error: error.message };
-        }
+        } catch (error) { return { ok: false, error: error.message }; }
     }
 
     static async saveBooking(data) {
         try {
-            // ตรวจสอบการจองซ้ำในวันและเวลาเดียวกัน
-            const snapshot = await db.collection('bookings')
-                .where('date', '==', data.date)
-                .where('room_id', '==', data.room_id)
-                .get();
-
-            let hasConflict = false;
-            let conflictSlot = '';
+            const snapshot = await db.collection('bookings').where('date', '==', data.date).where('room_id', '==', data.room_id).get();
+            let hasConflict = false; let conflictSlot = '';
 
             snapshot.forEach(doc => {
                 const b = doc.data();
                 if (b.status !== 'rejected') {
                     if (data.start_time < b.end_time && data.end_time > b.start_time) {
-                        hasConflict = true;
-                        conflictSlot = `${b.start_time} - ${b.end_time} น.`;
+                        hasConflict = true; conflictSlot = `${b.start_time} - ${b.end_time} น.`;
                     }
                 }
             });
 
-            if (hasConflict) {
-                return { ok: false, error: `ห้องนี้มีการจองแล้วในช่วงเวลา ${conflictSlot}` };
-            }
+            if (hasConflict) return { ok: false, error: `ห้องนี้มีการจองแล้วในช่วงเวลา ${conflictSlot}` };
 
             const docRef = await db.collection('bookings').add(data);
+            data.id = docRef.id;
+            
+            // 🟢 ยิงสำเนาไปเก็บที่ Google Sheets 
+            this.syncToSheet('saveBooking', data);
+            
             return { ok: true, id: docRef.id };
-        } catch (error) {
-            console.error("Firestore Save Error:", error);
-            return { ok: false, error: error.message };
-        }
+        } catch (error) { return { ok: false, error: error.message }; }
     }
 
     static async updateStatus(id, status) {
         try {
             await db.collection('bookings').doc(id).update({ status: status });
+            
+            // 🟢 ยิงสำเนาอัปเดตไปที่ Google Sheets
+            this.syncToSheet('updateStatus', { id: id, status: status });
+            
             return { ok: true };
-        } catch (error) {
-            return { ok: false, error: error.message };
-        }
+        } catch (error) { return { ok: false, error: error.message }; }
     }
 
     static async deleteBooking(id) {
         try {
             await db.collection('bookings').doc(id).delete();
+            
+            // 🟢 ยิงสำเนาสั่งลบที่ Google Sheets
+            this.syncToSheet('deleteBooking', { id: id });
+            
             return { ok: true };
-        } catch (error) {
-            return { ok: false, error: error.message };
-        }
+        } catch (error) { return { ok: false, error: error.message }; }
     }
 }
 
