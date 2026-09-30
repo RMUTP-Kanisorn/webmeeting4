@@ -1,5 +1,21 @@
+// ==========================================
+// 1. ตั้งค่า Firebase Configuration
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBIramIeTVvHCJNdAxXU-J9PXrM8tJZI_s",
+  authDomain: "meeting-room-system-fb505.firebaseapp.com",
+  projectId: "meeting-room-system-fb505",
+  storageBucket: "meeting-room-system-fb505.firebasestorage.app",
+  messagingSenderId: "998305490784",
+  appId: "1:998305490784:web:64c4884dcbbc82d3f76005",
+  measurementId: "G-KQK960KL04"
+};
+
+// เริ่มต้นเชื่อมต่อ Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
@@ -51,32 +67,72 @@ class AppState {
 }
 const state = new AppState();
 
-class ApiService {
-    static async request(payload) {
+// ==========================================
+// 2. จัดการข้อมูลผ่าน Cloud Firestore
+// ==========================================
+class FirestoreService {
+    static async getBookings() {
         try {
-            let url = CONFIG.API_URL;
-            let options = { redirect: 'follow' };
-
-            // ใช้ GET สำหรับดึงปฏิทิน (ป้องกันมือถือบล็อก) และใช้ POST สำหรับส่งข้อมูล
-            if (payload.action === 'getBookings') {
-                url = `${CONFIG.API_URL}?action=${payload.action}&month=${payload.month || ''}`;
-                options.method = 'GET';
-            } else {
-                options.method = 'POST';
-                options.body = JSON.stringify(payload);
-            }
-
-            const response = await fetch(url, options);
-            const text = await response.text(); 
-            try {
-                return JSON.parse(text); 
-            } catch (e) {
-                console.error("Server response error:", text);
-                throw new Error("ระบบทำงานขัดข้อง หรือสิทธิ์การเข้าถึงถูกบล็อก");
-            }
+            const snapshot = await db.collection('bookings').get();
+            const bookings = [];
+            snapshot.forEach(doc => {
+                bookings.push({ id: doc.id, ...doc.data() });
+            });
+            return { ok: true, data: bookings };
         } catch (error) {
-            console.error("API Error:", error);
-            throw new Error(error.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+            console.error("Firestore Get Error:", error);
+            return { ok: false, error: error.message };
+        }
+    }
+
+    static async saveBooking(data) {
+        try {
+            // ตรวจสอบการจองซ้ำในวันและเวลาเดียวกัน
+            const snapshot = await db.collection('bookings')
+                .where('date', '==', data.date)
+                .where('room_id', '==', data.room_id)
+                .get();
+
+            let hasConflict = false;
+            let conflictSlot = '';
+
+            snapshot.forEach(doc => {
+                const b = doc.data();
+                if (b.status !== 'rejected') {
+                    if (data.start_time < b.end_time && data.end_time > b.start_time) {
+                        hasConflict = true;
+                        conflictSlot = `${b.start_time} - ${b.end_time} น.`;
+                    }
+                }
+            });
+
+            if (hasConflict) {
+                return { ok: false, error: `ห้องนี้มีการจองแล้วในช่วงเวลา ${conflictSlot}` };
+            }
+
+            const docRef = await db.collection('bookings').add(data);
+            return { ok: true, id: docRef.id };
+        } catch (error) {
+            console.error("Firestore Save Error:", error);
+            return { ok: false, error: error.message };
+        }
+    }
+
+    static async updateStatus(id, status) {
+        try {
+            await db.collection('bookings').doc(id).update({ status: status });
+            return { ok: true };
+        } catch (error) {
+            return { ok: false, error: error.message };
+        }
+    }
+
+    static async deleteBooking(id) {
+        try {
+            await db.collection('bookings').doc(id).delete();
+            return { ok: true };
+        } catch (error) {
+            return { ok: false, error: error.message };
         }
     }
 }
@@ -198,7 +254,7 @@ const UIView = {
     },
     setLoadingBtn(btnId, isLoading, originalText = '') {
         const btn = document.getElementById(btnId);
-        if(!btn) return;
+        if (!btn) return;
         if (isLoading) {
             btn.dataset.orig = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังประมวลผล...';
@@ -220,7 +276,7 @@ const BookingController = {
         this.endSelect = document.getElementById('endTime');
         this.roomCards = document.querySelectorAll('.room-card');
 
-        if(!this.form) return;
+        if (!this.form) return;
 
         const today = new Date();
         today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -291,24 +347,21 @@ const BookingController = {
             finalEquipment += equipSelected;
 
             const payload = {
-                action: 'saveBooking',
-                data: {
-                    date: this.dateInput.value,
-                    meeting_title: document.getElementById('meetingTitle')?.value || '-',
-                    room_id: this.roomInput.value,
-                    start_time: this.startSelect.value,
-                    end_time: this.endSelect.value,
-                    booker: document.getElementById('bookerName')?.value || '-',
-                    phone: document.getElementById('phoneNumber')?.value || '-',
-                    email: '-', 
-                    equipment: finalEquipment.trim(),
-                    drinks: '-', 
-                    documents: document.getElementById('documents')?.value || '',
-                    status: CONFIG.STATUS.PENDING
-                }
+                date: this.dateInput.value,
+                meeting_title: document.getElementById('meetingTitle')?.value || '-',
+                room_id: this.roomInput.value,
+                start_time: this.startSelect.value,
+                end_time: this.endSelect.value,
+                booker: document.getElementById('bookerName')?.value || '-',
+                phone: document.getElementById('phoneNumber')?.value || '-',
+                email: '-', 
+                equipment: finalEquipment.trim(),
+                drinks: '-', 
+                documents: document.getElementById('documents')?.value || '',
+                status: CONFIG.STATUS.PENDING
             };
 
-            const res = await ApiService.request(payload);
+            const res = await FirestoreService.saveBooking(payload);
             
             if (res.ok) {
                 UIView.showAlert('ส่งคำขอจองเรียบร้อย ข้อมูลเข้าสู่ระบบแล้ว', 'success');
@@ -316,12 +369,13 @@ const BookingController = {
                 this.roomCards.forEach(c => c.classList.remove('selected'));
                 this.roomInput.value = '';
                 
-                payload.data.id = res.id;
-                state.addBooking(payload.data);
+                payload.id = res.id;
+                state.addBooking(payload);
+                this.updateAvailableSlots();
             } else {
                 if (res.error?.includes('จองแล้ว')) {
                     const conflictMsg = document.getElementById('conflictMessageTxt');
-                    if(conflictMsg) conflictMsg.innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
+                    if (conflictMsg) conflictMsg.innerHTML = `${res.error}<br><span class="text-red-500">โปรดเลือกเวลาอื่น</span>`;
                     UIView.toggleModal('conflictModal', true);
                 } else {
                     UIView.showAlert(res.error || 'การจองล้มเหลว', 'error');
@@ -339,15 +393,13 @@ const CalendarController = {
     init() {
         const btnPrev = document.getElementById('btnPrevMonth');
         const btnNext = document.getElementById('btnNextMonth');
-        if(btnPrev) btnPrev.addEventListener('click', () => this.changeMonth(-1));
-        if(btnNext) btnNext.addEventListener('click', () => this.changeMonth(1));
+        if (btnPrev) btnPrev.addEventListener('click', () => this.changeMonth(-1));
+        if (btnNext) btnNext.addEventListener('click', () => this.changeMonth(1));
         this.loadData();
     },
     async loadData() {
-        const year = state.currentDate.getFullYear();
-        const month = String(state.currentDate.getMonth() + 1).padStart(2, '0');
         try {
-            const res = await ApiService.request({ action: 'getBookings', month: `${year}-${month}` });
+            const res = await FirestoreService.getBookings();
             if (res && res.ok) {
                 state.setBookings(res.data);
                 this.render();
@@ -361,17 +413,16 @@ const CalendarController = {
     async changeMonth(offset) {
         state.currentDate.setMonth(state.currentDate.getMonth() + offset);
         this.render();
-        await this.loadData();
     },
     render() {
         const grid = document.getElementById('calendarGrid');
-        if(!grid) return;
+        if (!grid) return;
         
         const year = state.currentDate.getFullYear();
         const month = state.currentDate.getMonth();
 
         const monthDisplay = document.getElementById('currentMonthDisplay');
-        if(monthDisplay) monthDisplay.textContent = `${CONFIG.MONTHS[month]} ${year + 543}`;
+        if (monthDisplay) monthDisplay.textContent = `${CONFIG.MONTHS[month]} ${year + 543}`;
         
         grid.innerHTML = '';
 
@@ -417,7 +468,7 @@ const CalendarController = {
             </div>
         `;
         const modalBody = document.getElementById('modalContentBody');
-        if(modalBody) modalBody.innerHTML = html;
+        if (modalBody) modalBody.innerHTML = html;
         UIView.toggleModal('bookingModal', true);
         Utils.refreshIcons();
     }
@@ -434,13 +485,13 @@ const AdminController = {
         const statusFilter = document.getElementById('statusFilterSelect');
         const listContainer = document.getElementById('bookingsListContainer');
 
-        if(loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        if(logoutBtn) logoutBtn.addEventListener('click', () => this.handleLogout());
-        if(searchInput) searchInput.addEventListener('input', () => this.renderList());
-        if(roomFilter) roomFilter.addEventListener('change', () => this.renderList());
-        if(statusFilter) statusFilter.addEventListener('change', () => this.renderList());
+        if (loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        if (logoutBtn) logoutBtn.addEventListener('click', () => this.handleLogout());
+        if (searchInput) searchInput.addEventListener('input', () => this.renderList());
+        if (roomFilter) roomFilter.addEventListener('change', () => this.renderList());
+        if (statusFilter) statusFilter.addEventListener('change', () => this.renderList());
 
-        if(listContainer) {
+        if (listContainer) {
             listContainer.addEventListener('click', (e) => {
                 const btn = e.target.closest('.btn-action');
                 if (!btn || !btn.dataset.action) return;
@@ -449,38 +500,28 @@ const AdminController = {
                 const booking = state.bookings.find(b => b.id === id);
                 if (!booking) return;
 
-                if (btn.dataset.action === 'approve') this.doAction('approveBooking', booking, `ยืนยันการอนุมัติ?`);
-                if (btn.dataset.action === 'reject') this.doAction('rejectBooking', booking, `ไม่อนุมัติการจองนี้ใช่หรือไม่?`);
-                if (btn.dataset.action === 'delete') this.doAction('deleteBooking', booking, `ลบการจองนี้ใช่หรือไม่?\nการกระทำนี้ย้อนกลับไม่ได้`);
+                if (btn.dataset.action === 'approve') this.doAction('approve', booking, `ยืนยันการอนุมัติ?`);
+                if (btn.dataset.action === 'reject') this.doAction('reject', booking, `ไม่อนุมัติการจองนี้ใช่หรือไม่?`);
+                if (btn.dataset.action === 'delete') this.doAction('delete', booking, `ลบการจองนี้ใช่หรือไม่?\nการกระทำนี้ย้อนกลับไม่ได้`);
             });
         }
     },
-    async handleLogin(e) {
+    handleLogin(e) {
         e.preventDefault();
         const user = document.getElementById('adminUser').value.trim();
         const pass = document.getElementById('adminPass').value;
         const err = document.getElementById('loginErrorMsg');
 
-        UIView.setLoadingBtn('adminLoginBtn', true);
-
-        try {
-            const res = await ApiService.request({ action: 'adminLogin', data: { user, pass } });
-            if (res.ok) {
-                state.isAdminLoggedIn = true;
-                if(err) err.classList.add('hidden');
-                document.getElementById('adminLoginBox').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                this.renderDashboard();
-            } else {
-                if(err) err.classList.remove('hidden');
-            }
-        } catch (e) {
-            if(err) {
-                err.innerHTML = '<i data-lucide="wifi-off" class="w-4 h-4"></i> ' + e.message;
-                err.classList.remove('hidden');
-            }
+        // รหัสแอดมินเดิม
+        if (user === 'admin' && pass === '11223344') {
+            state.isAdminLoggedIn = true;
+            if (err) err.classList.add('hidden');
+            document.getElementById('adminLoginBox').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            this.renderDashboard();
+        } else {
+            if (err) err.classList.remove('hidden');
         }
-        UIView.setLoadingBtn('adminLoginBtn', false, 'เข้าสู่ระบบ');
     },
     handleLogout() {
         state.isAdminLoggedIn = false;
@@ -498,10 +539,10 @@ const AdminController = {
         const elRejected = document.getElementById('statRejected');
         const elTotal = document.getElementById('statTotal');
 
-        if(elPending) elPending.textContent = counts.pending;
-        if(elApproved) elApproved.textContent = counts.approved;
-        if(elRejected) elRejected.textContent = counts.rejected;
-        if(elTotal) elTotal.textContent = counts.total;
+        if (elPending) elPending.textContent = counts.pending;
+        if (elApproved) elApproved.textContent = counts.approved;
+        if (elRejected) elRejected.textContent = counts.rejected;
+        if (elTotal) elTotal.textContent = counts.total;
 
         this.renderCharts();
         this.renderList();
@@ -572,14 +613,14 @@ const AdminController = {
         const statusFilter = document.getElementById('statusFilterSelect');
         const container = document.getElementById('bookingsListContainer');
         
-        if(!container) return;
+        if (!container) return;
 
         const search = searchInput ? searchInput.value.toLowerCase() : '';
         const room = roomFilter ? roomFilter.value : '';
         const status = statusFilter ? statusFilter.value : '';
 
         let filtered = state.bookings.filter(b => {
-            return (!search || b.booker.toLowerCase().includes(search) || b.phone.includes(search) || (b.email || '').toLowerCase().includes(search))
+            return (!search || b.booker.toLowerCase().includes(search) || b.phone.includes(search))
                 && (!room || b.room_id === room)
                 && (!status || b.status === status);
         });
@@ -593,32 +634,27 @@ const AdminController = {
         }
         Utils.refreshIcons();
     },
-    async doAction(actionName, bookingObj, confirmMsg) {
+    async doAction(actionType, bookingObj, confirmMsg) {
         if (!confirm(confirmMsg)) return;
 
         try {
-            const payload = {
-                action: actionName,
-                id: bookingObj.id,
-                booker: bookingObj.booker,
-                date: bookingObj.date,
-                startTime: bookingObj.start_time,
-                endTime: bookingObj.end_time,
-                room: bookingObj.room_id,
-                meeting_title: bookingObj.meeting_title
-            };
+            let res;
+            if (actionType === 'approve') {
+                res = await FirestoreService.updateStatus(bookingObj.id, CONFIG.STATUS.APPROVED);
+                if (res.ok) state.updateBookingStatus(bookingObj.id, CONFIG.STATUS.APPROVED);
+            } else if (actionType === 'reject') {
+                res = await FirestoreService.updateStatus(bookingObj.id, CONFIG.STATUS.REJECTED);
+                if (res.ok) state.updateBookingStatus(bookingObj.id, CONFIG.STATUS.REJECTED);
+            } else if (actionType === 'delete') {
+                res = await FirestoreService.deleteBooking(bookingObj.id);
+                if (res.ok) state.removeBooking(bookingObj.id);
+            }
 
-            const res = await ApiService.request(payload);
-            if (res.ok) {
+            if (res && res.ok) {
                 UIView.showAlert('ดำเนินการสำเร็จ', 'success');
-
-                if (actionName === 'deleteBooking') state.removeBooking(bookingObj.id);
-                else if (actionName === 'approveBooking') state.updateBookingStatus(bookingObj.id, CONFIG.STATUS.APPROVED);
-                else if (actionName === 'rejectBooking') state.updateBookingStatus(bookingObj.id, CONFIG.STATUS.REJECTED);
-
                 this.renderDashboard();
             } else {
-                UIView.showAlert(res.error || 'ผิดพลาดจากฝั่งเซิร์ฟเวอร์', 'error');
+                UIView.showAlert(res.error || 'การดำเนินการล้มเหลว', 'error');
             }
         } catch (err) {
             UIView.showAlert(err.message, 'error');
