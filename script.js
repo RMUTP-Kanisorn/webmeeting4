@@ -1,5 +1,4 @@
 const CONFIG = {
-    // นำ URL Web App ของคุณมาใส่ที่นี่
     API_URL: 'https://script.google.com/macros/s/AKfycbzVcfi7utceE9FSPs31ljKatuyVPw2YUNSOcWqXkzlKoKAxOHv2faz0obkMOBfMi2w/exec',
     STATUS: {
         PENDING: 'pending',
@@ -55,16 +54,20 @@ const state = new AppState();
 class ApiService {
     static async request(payload) {
         try {
-            // ใช้ POST ในการส่ง/ดึงข้อมูลทั้งหมด เพื่อหลีกเลี่ยงการถูก Block จากเบราว์เซอร์
-            const options = {
-                method: 'POST',
-                body: JSON.stringify(payload),
-                redirect: 'follow'
-            };
+            let url = CONFIG.API_URL;
+            let options = { redirect: 'follow' };
 
-            const response = await fetch(CONFIG.API_URL, options);
+            // ใช้ GET สำหรับดึงปฏิทิน (ป้องกันมือถือบล็อก) และใช้ POST สำหรับส่งข้อมูล
+            if (payload.action === 'getBookings') {
+                url = `${CONFIG.API_URL}?action=${payload.action}&month=${payload.month || ''}`;
+                options.method = 'GET';
+            } else {
+                options.method = 'POST';
+                options.body = JSON.stringify(payload);
+            }
+
+            const response = await fetch(url, options);
             const text = await response.text(); 
-            
             try {
                 return JSON.parse(text); 
             } catch (e) {
@@ -345,7 +348,7 @@ const CalendarController = {
         const month = String(state.currentDate.getMonth() + 1).padStart(2, '0');
         try {
             const res = await ApiService.request({ action: 'getBookings', month: `${year}-${month}` });
-            if (res.ok) {
+            if (res && res.ok) {
                 state.setBookings(res.data);
                 this.render();
                 BookingController.updateAvailableSlots();
